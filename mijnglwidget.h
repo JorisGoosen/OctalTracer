@@ -10,6 +10,7 @@
 #include <QKeyEvent>
 #include "hoofdscherm.h"
 #include "Perlin.h"
+#include "octal.h"
 
 const long double PI = 3.141592653589793238L;
 const float FPI = 3.141592653589793238f;
@@ -48,6 +49,7 @@ private:
                 FarDistance			= 100.0f;
     QVector3D   Translatie;
     float       Rotate = 0.0f, RotateVert = 0.0f;
+    Octal       *MijnOctal = NULL;
 };
 
 #endif // MIJNGLWIDGET_H

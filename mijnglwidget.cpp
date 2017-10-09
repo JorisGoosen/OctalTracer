@@ -8,7 +8,7 @@ void MijnGLWidget::initializeGL()
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    if(!prepareShaderProgram( ":/Shaders/RayCast.vert", ":/Shaders/RayCast.frag" )) return;
+    if(!prepareShaderProgram( ":/Shaders/Octal.vert", ":/Shaders/Octal.frag" )) return;
 
     float points[] = {
          1,  1, 1, 1,
@@ -45,7 +45,8 @@ void MijnGLWidget::initializeGL()
 
 
     printf("Perlin generatie begonnen!\n");
-  //  MijnPerlin = new Perlin(this);
+    MijnPerlin = new Perlin(this);
+    MijnOctal = new Octal(this);
 }
 
 void MijnGLWidget::resizeGL(int w, int h)
@@ -75,7 +76,7 @@ void MijnGLWidget::paintGL()
     m_shader.setUniformValue("BPos", ZonPos);
     m_shader.setUniformValue("Translation", Translatie);
     m_shader.setUniformValue( "RGBFragMultiplier", QVector3D(0.0f, 0.0f, 0.0f));
-   // MijnPerlin->BindBuffers();
+    MijnPerlin->BindBuffers();
     m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );

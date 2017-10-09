@@ -1,11 +1,9 @@
 #pragma once
 
 #include "shaderstorage.h"
-#include <QVector3D>
 #include <vector>
 #include <list>
 #include <algorithm>
-#include <QtCore/qmath.h>
 
 
 #define PERLIN_NUM_GRADIENTS 1024

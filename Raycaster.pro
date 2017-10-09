@@ -18,14 +18,16 @@ SOURCES += \
         main.cpp \
         hoofdscherm.cpp \
     mijnglwidget.cpp \
-    Perlin.cpp
+    Perlin.cpp \
+    octal.cpp
 
 HEADERS += \
         hoofdscherm.h \
     mijnglwidget.h \
     Perlin.h \
     shaderstorage.h \
-    commonfunctions.h
+    commonfunctions.h \
+    octal.h
 
 FORMS += \
         hoofdscherm.ui
@@ -37,7 +39,9 @@ DISTFILES += \
     Shaders/neutraal.frag \
     Shaders/RayCast.frag \
     Shaders/neutraal.vert \
-    Shaders/RayCast.vert
+    Shaders/RayCast.vert \
+    Shaders/Octal.frag \
+    Shaders/Octal.vert
 
 RESOURCES += \
     shaders.qrc
