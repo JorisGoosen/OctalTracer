@@ -161,37 +161,35 @@ float CalculateShadow(vec3 LightPos, vec3 ObjectPos, float K)
 {
 
 	//Rustig over nadenken ofzo?
-        vec3 StartPos  = LightPos;
-        vec3 Ray = normalize(ObjectPos - LightPos);
+
+        vec3 Ray = normalize(LightPos - ObjectPos);
+        vec3 StartPos  = ObjectPos;
 
 	float TotalDist = 0.0f;
-	float Licht = 1.0f;
+        //float Licht = 1.0f;
 
 	while(TotalDist < 100.0f)
 	{
 		LastFoundPos = StartPos + TotalDist * Ray;
 
 		float MarchDist = GetMarchingDistance(LastFoundPos);
-		
-
-                if(distance(ObjectPos, LastFoundPos) < TresholdDist * 2.0f)
-                    return dot(-1.0f * Ray, GetNormal(LastFoundPos)); //GetInigoNormal(ObjectPos));
 
                 if(MarchDist < TresholdDist)
 		{
-                        /*if(GetIniqoQuilesNoise(LastFoundPos) < DensityNoiseStop)
-					MarchDist += StepSize;
-                        else */
-                      return 0.0f;
+                 /*  if(GetIniqoQuilesNoise(LastFoundPos) < DensityNoiseStop)
+                        MarchDist += StepSize;
+                    else*/
+                        return 0.0f;
                     //return 1.0f - Licht;
 		}
 
-                Licht = min(Licht, K * MarchDist / TresholdDist);
+                //Licht = min(Licht, K * MarchDist / TresholdDist);
 
 		TotalDist += MarchDist * MarchDistAttenuate;
 	}
 
-	return 1.0f;
+        return  dot(Ray, GetNormal(StartPos)); //GetInigoNormal(ObjectPos));
+        //return Licht;
 }
 
 vec4 MarchToColor(vec3 Ray)
@@ -205,15 +203,16 @@ vec4 MarchToColor(vec3 Ray)
 
        // return vec4(1.0f);
 
-        vec3 IntersectPos = LastFoundPos;
+      //  vec3 IntersectPos = LastFoundPos;
+        vec3 SafeObjectPos = LastFoundPos - (TresholdDist * Ray * 3.0f);
 
-        //float RLightContrib = CalculateShadow(vec3(0.0f, 20.0f, 0.0f), IntersectPos, 1.0f);
+        float RLightContrib = CalculateShadow(RPos, SafeObjectPos, 1.0f);
         //float GLightContrib = CalculateShadow(GPos, IntersectPos, 1.0f);
         //float BLightContrib = CalculateShadow(BPos, IntersectPos, 1.0f);
 	
-        //return vec4(RLightContrib);//, GLightContrib, BLightContrib, 256.0f);
+        return vec4(RLightContrib);//, GLightContrib, BLightContrib, 256.0f);
 
-        return vec4(dot(normalize(RPos.xyz - IntersectPos), GetNormal(IntersectPos)));
+        //return vec4(dot(normalize(RPos.xyz - IntersectPos), GetNormal(IntersectPos)));
 
         //return vec4(GetNormal(IntersectPos) * 0.5f + vec3(0.5f), 0.0f);
         //return vec4(1.0f);
