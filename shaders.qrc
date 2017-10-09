@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Shaders/neutraal.frag</file>
+        <file>Shaders/neutraal.vert</file>
+        <file>Shaders/RayCast.frag</file>
+        <file>Shaders/RayCast.vert</file>
+    </qresource>
+</RCC>
