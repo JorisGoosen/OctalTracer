@@ -7,7 +7,7 @@
 #include <time.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SWIZZLE
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 inline float randfloat(float min, float max) { return min+((((float)(rand()%RAND_MAX))/((float)RAND_MAX))* (max-min)); }
 

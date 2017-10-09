@@ -14,7 +14,7 @@ uniform vec3 Translation;
 
 uniform float fov_y_scale;
 uniform float aspect;
-uniform vec4 RPos, GPos, BPos;
+uniform vec3 RPos, GPos, BPos;
 uniform vec3 RGBFragMultiplier;
 
 
@@ -47,34 +47,34 @@ float GetIniqoQuilesNoise(in vec3 x)
 
     
     // gradients
-    vec3 ga = hash( p+vec3(0.0,0.0,0.0) );
-    vec3 gb = hash( p+vec3(1.0,0.0,0.0) );
-    vec3 gc = hash( p+vec3(0.0,1.0,0.0) );
-    vec3 gd = hash( p+vec3(1.0,1.0,0.0) );
-    vec3 ge = hash( p+vec3(0.0,0.0,1.0) );
-    vec3 gf = hash( p+vec3(1.0,0.0,1.0) );
-    vec3 gg = hash( p+vec3(0.0,1.0,1.0) );
-    vec3 gh = hash( p+vec3(1.0,1.0,1.0) );
-    
+    vec3 ga = hash(p + vec3(0.0,0.0,0.0) );
+    vec3 gb = hash(p + vec3(1.0,0.0,0.0) );
+    vec3 gc = hash(p + vec3(0.0,1.0,0.0) );
+    vec3 gd = hash(p + vec3(1.0,1.0,0.0) );
+    vec3 ge = hash(p + vec3(0.0,0.0,1.0) );
+    vec3 gf = hash(p + vec3(1.0,0.0,1.0) );
+    vec3 gg = hash(p + vec3(0.0,1.0,1.0) );
+    vec3 gh = hash(p + vec3(1.0,1.0,1.0) );
+
     // projections
-    float va = dot( ga, w-vec3(0.0,0.0,0.0) );
-    float vb = dot( gb, w-vec3(1.0,0.0,0.0) );
-    float vc = dot( gc, w-vec3(0.0,1.0,0.0) );
-    float vd = dot( gd, w-vec3(1.0,1.0,0.0) );
-    float ve = dot( ge, w-vec3(0.0,0.0,1.0) );
-    float vf = dot( gf, w-vec3(1.0,0.0,1.0) );
-    float vg = dot( gg, w-vec3(0.0,1.0,1.0) );
-    float vh = dot( gh, w-vec3(1.0,1.0,1.0) );
+    float va = dot(ga, w - vec3(0.0,0.0,0.0) );
+    float vb = dot(gb, w - vec3(1.0,0.0,0.0) );
+    float vc = dot(gc, w - vec3(0.0,1.0,0.0) );
+    float vd = dot(gd, w - vec3(1.0,1.0,0.0) );
+    float ve = dot(ge, w - vec3(0.0,0.0,1.0) );
+    float vf = dot(gf, w - vec3(1.0,0.0,1.0) );
+    float vg = dot(gg, w - vec3(0.0,1.0,1.0) );
+    float vh = dot(gh, w - vec3(1.0,1.0,1.0) );
 	
     // interpolation
     return va + 
-           u.x*(vb-va) + 
-           u.y*(vc-va) + 
-           u.z*(ve-va) + 
-           u.x*u.y*(va-vb-vc+vd) + 
-           u.y*u.z*(va-vc-ve+vg) + 
-           u.z*u.x*(va-vb-ve+vf) + 
-           u.x*u.y*u.z*(-va+vb+vc-vd+ve-vf-vg+vh);
+           u.x * (vb-va) +
+           u.y * (vc-va) +
+           u.z * (ve-va) +
+           u.x * u.y * (va-vb-vc+vd) +
+           u.y * u.z * (va-vc-ve+vg) +
+           u.z * u.x * (va-vb-ve+vf) +
+           u.x * u.y * u.z * (-va+vb+vc-vd+ve-vf-vg+vh);
 }
 
 float GetIniqoQuilesNoise(in vec4 x)
@@ -84,7 +84,7 @@ float GetIniqoQuilesNoise(in vec4 x)
 
 
 vec3 Origin, BolPos = vec3(0.0f, 0.0f, 0.0f);
-float BolRadius = 2.0f, TresholdDist = 0.0001f;
+float BolRadius = 2.0f, TresholdDist = 0.000001f;
 const float MarchDistAttenuate = 1.0f;
 
 float GetMarchingDistance(vec3 Pos)
@@ -100,9 +100,12 @@ float GetMarchingDistance(vec3 Pos)
 	return max(0.0f, length(Pos - BolPos) - BolRadius);
 }
 
+const float NormalOffset = 0.001f;
+
 vec3 GetNormal(vec3 Pos)
 {
-        const float Offset = TresholdDist * 2.0f;
+        const float Offset = NormalOffset;
+
 	return normalize(
                 vec3(
                         GetMarchingDistance(Pos + vec3(Offset, 0, 0)) - GetMarchingDistance(Pos - vec3(Offset, 0, 0)),
@@ -113,7 +116,7 @@ vec3 GetNormal(vec3 Pos)
 
 vec3 GetInigoNormal(vec3 Pos)
 {
-	const float Offset = TresholdDist * 1.1f;
+        const float Offset = NormalOffset;
 	return normalize(
                 vec3(
                         GetIniqoQuilesNoise(Pos + vec3(Offset, 0, 0)) - GetIniqoQuilesNoise(Pos - vec3(Offset, 0, 0)),
@@ -132,10 +135,9 @@ float MarchToObject(vec3 StartPos, vec3 Ray)
 	int step = 0;
 	float TotalDist = 0.0f;
 	
-
 	while(TotalDist < 100.0f)
 	{
-		LastFoundPos = StartPos + TotalDist * Ray;
+                LastFoundPos = StartPos + TotalDist * Ray;
 		//float MarchDist = GetMarchingDistance(LastFoundPos + (0.01f * PerlinGradients.data_Gradients[(step++)%PerlinSize]));
 		float MarchDist = GetMarchingDistance(LastFoundPos);
 		
@@ -180,7 +182,8 @@ float CalculateShadow(vec3 LightPos, vec3 ObjectPos, float K)
                         /*if(GetIniqoQuilesNoise(LastFoundPos) < DensityNoiseStop)
 					MarchDist += StepSize;
                         else */
-                        return 1.0f - Licht;
+                      return 0.0f;
+                    //return 1.0f - Licht;
 		}
 
                 Licht = min(Licht, K * MarchDist / TresholdDist);
@@ -204,11 +207,16 @@ vec4 MarchToColor(vec3 Ray)
 
         vec3 IntersectPos = LastFoundPos;
 
-        float RLightContrib = CalculateShadow(vec3(0.0f, 20.0f, 0.0f), IntersectPos, 1.0f);
+        //float RLightContrib = CalculateShadow(vec3(0.0f, 20.0f, 0.0f), IntersectPos, 1.0f);
         //float GLightContrib = CalculateShadow(GPos, IntersectPos, 1.0f);
         //float BLightContrib = CalculateShadow(BPos, IntersectPos, 1.0f);
 	
-        return vec4(RLightContrib);//, GLightContrib, BLightContrib, 256.0f);
+        //return vec4(RLightContrib);//, GLightContrib, BLightContrib, 256.0f);
+
+        return vec4(dot(normalize(RPos.xyz - IntersectPos), GetNormal(IntersectPos)));
+
+        //return vec4(GetNormal(IntersectPos) * 0.5f + vec3(0.5f), 0.0f);
+        //return vec4(1.0f);
 }
 
 

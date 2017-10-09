@@ -45,7 +45,7 @@ void MijnGLWidget::initializeGL()
 
 
     printf("Perlin generatie begonnen!\n");
-    MijnPerlin = new Perlin(this);
+  //  MijnPerlin = new Perlin(this);
 }
 
 void MijnGLWidget::resizeGL(int w, int h)
@@ -62,6 +62,7 @@ void MijnGLWidget::paintGL()
 
     m_modelview.setToIdentity();
     m_modelview.rotate(Rotate, QVector3D(0, 1, 0));
+    m_modelview.rotate(RotateVert, QVector3D(1, 0, 0));
     m_modelview.translate(Translatie);
 
     m_shader.bind();
@@ -74,7 +75,7 @@ void MijnGLWidget::paintGL()
     m_shader.setUniformValue("BPos", ZonPos);
     m_shader.setUniformValue("Translation", Translatie);
     m_shader.setUniformValue( "RGBFragMultiplier", QVector3D(0.0f, 0.0f, 0.0f));
-    MijnPerlin->BindBuffers();
+   // MijnPerlin->BindBuffers();
     m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
@@ -108,13 +109,39 @@ void MijnGLWidget::keyPressEvent( QKeyEvent* e )
         HoofdScherm::Instance()->close();
         break;
 
-    case Qt::Key_Up:
+
+    case Qt::Key_W:
         Translatie += QVector3D(0, 0, TranslatieStap);
         break;
 
-    case Qt::Key_Down:
+    case Qt::Key_S:
         Translatie -= QVector3D(0, 0, TranslatieStap);
         break;
+
+    case Qt::Key_Q:
+        Translatie += QVector3D(0, TranslatieStap, 0);
+        break;
+
+    case Qt::Key_E:
+        Translatie -= QVector3D(0, TranslatieStap, 0);
+        break;
+
+    case Qt::Key_A:
+        Translatie -= QVector3D(TranslatieStap, 0, 0);
+        break;
+
+    case Qt::Key_D:
+        Translatie += QVector3D(TranslatieStap, 0, 0);
+        break;
+
+    case Qt::Key_Up:
+        RotateVert -= 0.1f * FPI;
+        break;
+
+    case Qt::Key_Down:
+        RotateVert += 0.1f * FPI;
+        break;
+
 
     case Qt::Key_Left:
         Rotate -= 0.1f * FPI;

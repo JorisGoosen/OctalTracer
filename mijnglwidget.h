@@ -47,7 +47,7 @@ private:
                 NearDistance		= 0.001f,
                 FarDistance			= 100.0f;
     QVector3D   Translatie;
-    float       Rotate = 0.0f;
+    float       Rotate = 0.0f, RotateVert = 0.0f;
 };
 
 #endif // MIJNGLWIDGET_H
