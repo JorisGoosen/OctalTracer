@@ -18,168 +18,96 @@ uniform vec3 RPos, GPos, BPos;
 uniform vec3 RGBFragMultiplier;
 
 
-//Perlin Stuff:
-
 uniform int OCTAL_MAX;
 
 struct ShaderOctalNode
 {
     vec4 Kleur;
     uint Sub[8];
+    //uint Ouder;
+    //uint Padding[3];
 };
 
 layout(std430, binding = 0) buffer ShaderTree	{ ShaderOctalNode data[]; } Nodes;
 
-vec3 Origin, BolPos = vec3(0.0f, 0.0f, 0.0f);
-float BolRadius = 2.0f, TresholdDist = 0.001f;// Good for rendering sphere only: 0.000001f;
-const float MarchDistAttenuate = 1.0f;
+vec3 Origin;
+vec3 TotalCubeBounds[2] = {vec3(-2.5f), vec3(2.5f)};
 
-float GetMarchingDistance(vec3 Pos)
+vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 {
-/*	vec4 BolRelativePos = Pos - BolPos;
+    uint NodeIndex  = 0;
+    vec4 FaalKleur  = vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
+    vec3 InvRay     = vec3(1.0f) / Ray;
+    ivec3 Sign      = ivec3(InvRay.x < 0, InvRay.y < 0, InvRay.z < 0);
 
-	float Bol = max(0.0f, length(BolRelativePos) - BolRadius;// + (GetIniqoQuilesNoise(Angles) * 0.025f)  );//+ (0.025f * sin(Pos.x * 6.28 * 12)) + (0.045f * sin(Pos.y * 6.28 * 4)) + (0.015f * sin(Pos.z * 6.28 * 6)) );
+    vec3 CubeMin, CubeMax, tmin, tmax;
+    float maxmin, minmax;
+    vec3 CubeBounds[2] = {TotalCubeBounds[0], TotalCubeBounds[1]};
+    vec3 CubePos;
+    int Diepte = 0;
 
-	return Bol;
+    while(true)
+    {
+        CubeMin = vec3(CubeBounds[Sign.x].x, CubeBounds[Sign.y].y, CubeBounds[Sign.z].z);
+        CubeMax = vec3(CubeBounds[1-Sign.x].x, CubeBounds[1-Sign.y].y, CubeBounds[1-Sign.z].z);
+
+        tmin = (CubeMin - Begin) * InvRay;
+        tmax = (CubeMax - Begin) * InvRay;
+
+        maxmin = max(max(tmin.x, tmin.y), tmin.z);
+        minmax = min(min(tmax.x, tmax.y), tmax.z);
+
+        if(maxmin > minmax)
+            return FaalKleur;
+
+       /*if(Nodes.data[NodeIndex].Kleur.a > 0.5f)
+            return Nodes.data[NodeIndex].Kleur;
 */
-		//(0.025f * sin(Pos.x * 6.28 * 12)) + (0.045f * sin(Pos.y * 6.28 * 4)) + (0.035f * sin(Pos.z * 6.28 * 6)) );
+        //Anders dan hebben we misschien kindernodes?
+        vec3 CubeExtent = CubeBounds[1] - CubeBounds[0];
+        vec3 VageCubePos = ((maxmin * Ray + Begin) - CubeBounds[0]) / CubeExtent;
+        CubePos = clamp(round(VageCubePos), 0.0f, 1.0f);
 
-	return max(0.0f, length(Pos - BolPos) - BolRadius);
+        uint SubIndex = uint(CubePos.x + (2 * CubePos.y) + (4 * CubePos.z));
+        uint KindIndex = Nodes.data[NodeIndex].Sub[SubIndex];
+
+        //if(KindIndex == 0) return FaalKleur; //Als de alignment niet goed uitkomt kun je dit krijgen..
+
+        if(KindIndex == OCTAL_MAX)
+        {
+            if(Nodes.data[NodeIndex].Kleur.a > 0.5f)
+                return Nodes.data[NodeIndex].Kleur;
+
+            /*NodeIndex = 0;
+            for(int i=0; i<2; i++)
+                CubeBounds[i] = TotalCubeBounds[i];
+
+            Begin = Begin + Ray * (minmax + (length(CubeExtent) * 0.1f));
+
+            Diepte = 0;*/
+            return vec4(0.0f);
+        }
+        else
+        {
+
+            NodeIndex        = KindIndex;
+            CubeExtent      *= 0.5f;
+            CubeBounds[0]   += CubeExtent * CubePos;
+            CubeBounds[1]    = CubeBounds[0] + CubeExtent;
+            Diepte++;
+        }
+    }
 }
-
-
-vec3 GetNormal(vec3 Pos)
-{
-        const float Offset = 0.001f;
-
-	return normalize(
-                vec3(
-                        GetMarchingDistance(Pos + vec3(Offset, 0, 0)) - GetMarchingDistance(Pos - vec3(Offset, 0, 0)),
-                        GetMarchingDistance(Pos + vec3(0, Offset, 0)) - GetMarchingDistance(Pos - vec3(0, Offset, 0)),
-                        GetMarchingDistance(Pos + vec3(0, 0, Offset)) - GetMarchingDistance(Pos - vec3(0, 0, Offset))
-		));
-}
-
-
-const float StepSize = 0.01f, DensityNoiseStop = 0.25f;
-
-vec3 GetInigoNormal(vec3 Pos)
-{
-        const float Offset = 0.1f;
-	return normalize(
-                vec3(
-                        GetIniqoQuilesNoise(Pos + vec3(Offset, 0, 0)) - GetIniqoQuilesNoise(Pos - vec3(Offset, 0, 0)),
-                        GetIniqoQuilesNoise(Pos + vec3(0, Offset, 0)) - GetIniqoQuilesNoise(Pos - vec3(0, Offset, 0)),
-                        GetIniqoQuilesNoise(Pos + vec3(0, 0, Offset)) - GetIniqoQuilesNoise(Pos - vec3(0, 0, Offset))
-		));
-}
-
-vec3 LastFoundPos;
-
-//Returns Last Moved Distance at the time it doesnt feel like going on anymore, if < 0 this means nothing found else distance to closest object this means it found the object
-float MarchToObject(vec3 StartPos, vec3 Ray)
-{
-	int step = 0;
-        float TotalDist = 0.0f, LastMove = 0.0f;
-	
-	while(TotalDist < 100.0f)
-	{
-                LastFoundPos = StartPos + TotalDist * Ray;
-		//float MarchDist = GetMarchingDistance(LastFoundPos + (0.01f * PerlinGradients.data_Gradients[(step++)%PerlinSize]));
-		float MarchDist = GetMarchingDistance(LastFoundPos);
-		
-		if(MarchDist < TresholdDist)
-		{
-                        if(GetIniqoQuilesNoise(LastFoundPos) < DensityNoiseStop)
-                            MarchDist = StepSize;
-                        else
-                            return LastMove;
-
-
-                    //return MarchDist;
-		}
-
-                LastMove = MarchDist;
-		TotalDist += MarchDist * MarchDistAttenuate;
-	}
-
-	return -1;
-}
-
-
-float CalculateShadow(vec3 LightPos, vec3 ObjectPos, float K)
-{
-
-	//Rustig over nadenken ofzo?
-
-        vec3 Ray = normalize(LightPos - ObjectPos);
-        vec3 StartPos  = ObjectPos;
-
-	float TotalDist = 0.0f;
-        //float Licht = 1.0f;
-
-	while(TotalDist < 100.0f)
-	{
-		LastFoundPos = StartPos + TotalDist * Ray;
-
-		float MarchDist = GetMarchingDistance(LastFoundPos);
-
-                if(MarchDist < TresholdDist)
-		{
-                   if(GetIniqoQuilesNoise(LastFoundPos) < DensityNoiseStop)
-                        MarchDist = StepSize;
-                    else
-                        return 0.0f;
-                    //return 1.0f - Licht;
-		}
-
-                //Licht = min(Licht, K * MarchDist / TresholdDist);
-
-		TotalDist += MarchDist * MarchDistAttenuate;
-	}
-
-        return  dot(Ray, GetInigoNormal(StartPos)); //GetInigoNormal(ObjectPos));
-        //return Licht;
-}
-
-vec4 MarchToColor(vec3 Ray)
-{
-	float MarchDist = MarchToObject(Origin, Ray);
-	
-	if(MarchDist < 0)
-                return vec4(Ray * 0.5f + vec3(0.5f), 0.0f);//vec4(0.0f); //We zijn te ver weg gegaan!
-
-	//Anders hebben we het object gevonden. Nu nog de licht-bijdrage!
-
-       // return vec4(1.0f);
-
-      //  vec3 IntersectPos = LastFoundPos;
-        vec3 SafeObjectPos = LastFoundPos - (MarchDist * Ray);
-
-        float RLightContrib = CalculateShadow(RPos, SafeObjectPos, 1.0f);
-        //float GLightContrib = CalculateShadow(GPos, IntersectPos, 1.0f);
-        //float BLightContrib = CalculateShadow(BPos, IntersectPos, 1.0f);
-	
-        return vec4(RLightContrib);//, GLightContrib, BLightContrib, 256.0f);
-
-        //return vec4(dot(normalize(RPos.xyz - IntersectPos), GetNormal(IntersectPos)));
-
-        //return vec4(GetNormal(IntersectPos) * 0.5f + vec3(0.5f), 0.0f);
-        //return vec4(1.0f);
-}
-
 
 
 void main(void)
 {
         //BolPos *= mat3(ModelView);
-        Origin = vec3(0.0f, 0.0f, 10.0f) * mat3(ModelView);//vec4(-Translation, 0.0f) *  ModelView;
-        Origin -= Translation;
+        Origin = mat3(ModelView) * Translation;//vec4(-Translation, 0.0f) *  ModelView;
+        //Origin -= Translation;
 
-        vec3 curraydir = normalize(vec3(TexPos.x * fov_y_scale * aspect, TexPos.y * fov_y_scale, -1.0) * mat3(ModelView)); //http://blog.hvidtfeldts.net/index.php/2014/01/combining-ray-tracing-and-polygons/
+        vec3 curraydir =  mat3(ModelView) * normalize(vec3(TexPos.x * fov_y_scale * aspect, TexPos.y * fov_y_scale, 1.0)); //http://blog.hvidtfeldts.net/index.php/2014/01/combining-ray-tracing-and-polygons/
 
-	fColor = MarchToColor(curraydir);
+        fColor = GetCubeIntersectColor(Origin, curraydir);
 
-	//fColor = vec4(GetIniqoQuilesNoise(vec3(TexPos * 0.5f + vec2(0.5f), 0)));//, GetPerlinNoise(vec3(TexPos* 0.5f + vec2(0.5f), 0.5f)), GetPerlinNoise(vec3(TexPos* 0.5f + vec2(0.5f), 1)), 1);
-	
 }

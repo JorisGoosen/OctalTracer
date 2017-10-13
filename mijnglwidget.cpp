@@ -3,7 +3,6 @@
 
 void MijnGLWidget::initializeGL()
 {
-    printf("MijnGLWidget begins!\n");
     initializeOpenGLFunctions();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -44,8 +43,7 @@ void MijnGLWidget::initializeGL()
     m_projection.perspective(FovYScale, AspectRatio, NearDistance, FarDistance);
 
 
-    printf("Perlin generatie begonnen!\n");
-    MijnPerlin = new Perlin(this);
+    //MijnPerlin = new Perlin(this);
     MijnOctal = new Octal(this);
 }
 
@@ -62,9 +60,10 @@ void MijnGLWidget::paintGL()
 
 
     m_modelview.setToIdentity();
+    //m_modelview.translate(Translatie);
     m_modelview.rotate(Rotate, QVector3D(0, 1, 0));
     m_modelview.rotate(RotateVert, QVector3D(1, 0, 0));
-    m_modelview.translate(Translatie);
+
 
     m_shader.bind();
     m_shader.setUniformValue("Projectie", m_projection);
@@ -76,8 +75,11 @@ void MijnGLWidget::paintGL()
     m_shader.setUniformValue("BPos", ZonPos);
     m_shader.setUniformValue("Translation", Translatie);
     m_shader.setUniformValue( "RGBFragMultiplier", QVector3D(0.0f, 0.0f, 0.0f));
-    MijnPerlin->BindBuffers();
-    m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
+    //MijnPerlin->BindBuffers();
+    //m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
+    MijnOctal->BindBuffer();
+    m_shader.setUniformValue("OCTAL_MAX", OCTAL_MAX);
+
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 }
@@ -104,6 +106,7 @@ bool MijnGLWidget::prepareShaderProgram( const QString& vertexShaderPath, const 
 
 void MijnGLWidget::keyPressEvent( QKeyEvent* e )
 {
+
     switch ( e->key() )
     {
     case Qt::Key_Escape:
@@ -136,20 +139,20 @@ void MijnGLWidget::keyPressEvent( QKeyEvent* e )
         break;
 
     case Qt::Key_Up:
-        RotateVert -= 0.1f * FPI;
+        RotateVert -= RotatieStap * FPI;
         break;
 
     case Qt::Key_Down:
-        RotateVert += 0.1f * FPI;
+        RotateVert += RotatieStap * FPI;
         break;
 
 
     case Qt::Key_Left:
-        Rotate -= 0.1f * FPI;
+        Rotate -= RotatieStap * FPI;
         break;
 
     case Qt::Key_Right:
-        Rotate += 0.1f * FPI;
+        Rotate += RotatieStap * FPI;
         break;
 
     default:

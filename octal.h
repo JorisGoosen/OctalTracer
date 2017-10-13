@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
-#include <queue>
+//#include <queue>
 #include <QOpenGLFunctions_4_5_Core>
 #include "commonfunctions.h"
 
@@ -13,32 +13,36 @@
 
 struct OctalNode
 {
-    OctalNode()
+    OctalNode(OctalNode * JeOuder = NULL)
     {
-        ZetMij(glm::vec4(0.0f));
+        ZetMij(glm::vec4(0.0f), JeOuder);
     }
 
-    OctalNode(glm::vec4 DezeKleur)
+    OctalNode(glm::vec4 DezeKleur, OctalNode * JeOuder = NULL)
     {
-        ZetMij(DezeKleur);
+        ZetMij(DezeKleur, JeOuder);
     }
 
-    void ZetMij(glm::vec4 DezeKleur)
+    void ZetMij(glm::vec4 DezeKleur, OctalNode * JeOuder)
     {
         for(int i=0; i<8; i++)
             Sub[i] = NULL;
 
         Kleur = DezeKleur;
+        Ouder = JeOuder;
     }
 
     glm::vec4 Kleur;
     OctalNode * Sub[8];
+    OctalNode * Ouder = NULL;
 };
 
 struct ShaderOctalNode
 {
     glm::mediump_vec4 Kleur;
     uint32_t Sub[8];
+    //uint32_t Ouder;
+    //uint32_t Padding[3];
 };
 
 class Octal
@@ -52,7 +56,7 @@ public:
     void ConvertOctalToShader();
 
 private:
-    uint32_t ConvertOctalToShader(OctalNode * HuidigeNode, uint32_t &Counter);
+    uint32_t ConvertOctalToShader(OctalNode * HuidigeNode, uint32_t &Counter, uint32_t Ouder);
 
     std::map<OctalNode, uint32_t> OctalNodeToShaderIndex;
     shaderstorage<ShaderOctalNode> *ShaderTree;
