@@ -46,4 +46,4 @@ DISTFILES += \
 RESOURCES += \
     shaders.qrc
 
-INCLUDEPATH += C:\Users\Falafel\Documents\glm-0.9.9-a1\
+INCLUDEPATH += C:\Users\Falafel\Documents\glm-0.9.9-a1

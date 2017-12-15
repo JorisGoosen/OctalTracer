@@ -9,7 +9,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include "commonfunctions.h"
 
-#define OCTAL_MAX 4096
+#define OCTAL_MAX 32
 
 struct OctalNode
 {
@@ -41,8 +41,8 @@ struct ShaderOctalNode
 {
     glm::mediump_vec4 Kleur;
     uint32_t Sub[8];
-    //uint32_t Ouder;
-    //uint32_t Padding[3];
+    //uint32_t Ouder, SubIndex;
+    //uint32_t Padding[2];
 };
 
 class Octal
@@ -54,9 +54,10 @@ public:
     void FillOctal();
 
     void ConvertOctalToShader();
+    uint32_t MaxDepth = 0;
 
 private:
-    uint32_t ConvertOctalToShader(OctalNode * HuidigeNode, uint32_t &Counter, uint32_t Ouder);
+    uint32_t ConvertOctalToShader(OctalNode * HuidigeNode, uint32_t &Counter, uint32_t Ouder, uint32_t SubIndex, uint32_t Diepte);
 
     std::map<OctalNode, uint32_t> OctalNodeToShaderIndex;
     shaderstorage<ShaderOctalNode> *ShaderTree;

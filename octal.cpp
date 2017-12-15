@@ -20,6 +20,8 @@ void Octal::FillOctal()
 
     OctalNode * Current(Root);
 
+    //int MaxLeeg = 6;
+
     while(Counter < OCTAL_MAX && Current != NULL)
     {
         bool Omlaag = Current->Ouder == NULL || rand()%2 ==0;
@@ -43,7 +45,8 @@ void Octal::FillOctal()
             }
             else
             {
-                Current->Sub[RandSub] = new OctalNode(glm::vec4(randcolor(), (float)(rand()%2)), Current);
+                bool Leeg = RandSub < 7 && RandSub > 0;
+                Current->Sub[RandSub] = new OctalNode(glm::vec4(randcolor(), Leeg ? 0.0f : 1.0f), Current);
                 Counter++;
                 //printf("Added node %d out of %d\n", Counter, OCTAL_MAX);
             }
@@ -57,7 +60,9 @@ void Octal::ConvertOctalToShader()
 {
     uint32_t RunningCounter = 0;
     OctalNodeToShaderIndex.clear();
-    ConvertOctalToShader(Root, RunningCounter, OCTAL_MAX);
+    ConvertOctalToShader(Root, RunningCounter, OCTAL_MAX, OCTAL_MAX, 0);
+
+    qDebug("Gevonden MaxDepth = %u\n", MaxDepth);
 
     if(false)
         for(int i=0; i<OCTAL_MAX; i++)
@@ -67,16 +72,19 @@ void Octal::ConvertOctalToShader()
                 (*ShaderTree)[i].Sub[4], (*ShaderTree)[i].Sub[5],  (*ShaderTree)[i].Sub[6],  (*ShaderTree)[i].Sub[7]);
 }
 
-uint32_t Octal::ConvertOctalToShader(OctalNode* HuidigeNode, uint32_t& Counter, uint32_t Ouder)
+uint32_t Octal::ConvertOctalToShader(OctalNode* HuidigeNode, uint32_t& Counter, uint32_t Ouder, uint32_t SubIndex, uint32_t Diepte)
 {
+    MaxDepth = glm::max(Diepte, MaxDepth);
+
     uint32_t HuidigeIndex = Counter;
     Counter++;
 
     //(*ShaderTree)[HuidigeIndex].Ouder = Ouder;
+    //(*ShaderTree)[HuidigeIndex].SubIndex = SubIndex;;
     (*ShaderTree)[HuidigeIndex].Kleur = glm::mediump_vec4(HuidigeNode->Kleur);
 
     for(int i=0; i<8; i++)
-        (*ShaderTree)[HuidigeIndex].Sub[i] = HuidigeNode->Sub[i] == NULL ? OCTAL_MAX : ConvertOctalToShader(HuidigeNode->Sub[i], Counter, HuidigeIndex);
+        (*ShaderTree)[HuidigeIndex].Sub[i] = HuidigeNode->Sub[i] == NULL ? OCTAL_MAX : ConvertOctalToShader(HuidigeNode->Sub[i], Counter, HuidigeIndex, i, Diepte + 1);
 
     return HuidigeIndex;
 }

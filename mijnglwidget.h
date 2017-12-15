@@ -14,7 +14,7 @@
 
 const long double PI = 3.141592653589793238L;
 const float FPI = 3.141592653589793238f;
-const float TranslatieStap = 1.0f, RotatieStap = 0.5f;
+const float TranslatieStap = 0.1f, RotatieStap = 0.5f;
 
 class MijnGLWidget : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 {
