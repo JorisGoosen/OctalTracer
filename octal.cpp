@@ -1,4 +1,6 @@
 #include "octal.h"
+#include <sstream>
+#include <iostream>
 
 Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
 {
@@ -46,7 +48,8 @@ void Octal::FillOctal()
             else
             {
                 bool Leeg = RandSub < 7 && RandSub > 0;
-                Current->Sub[RandSub] = new OctalNode(glm::vec4(randcolor(), Leeg ? 0.0f : 1.0f), Current);
+				Current->Sub[RandSub] = new OctalNode(glm::vec4(randcolor(), Leeg ? 0.0f : 1.0f), Current);
+				//Current->Sub[RandSub] = new OctalNode(glm::vec4(0.0f, 0.0f, 1.0f, Leeg ? 0.0f : 1.0f), Current);
                 Counter++;
                 //printf("Added node %d out of %d\n", Counter, OCTAL_MAX);
             }
@@ -70,6 +73,63 @@ void Octal::ConvertOctalToShader()
                 (*ShaderTree)[i].Kleur.x, (*ShaderTree)[i].Kleur.y, (*ShaderTree)[i].Kleur.z,
                 (*ShaderTree)[i].Sub[0], (*ShaderTree)[i].Sub[1],  (*ShaderTree)[i].Sub[2],  (*ShaderTree)[i].Sub[3],
                 (*ShaderTree)[i].Sub[4], (*ShaderTree)[i].Sub[5],  (*ShaderTree)[i].Sub[6],  (*ShaderTree)[i].Sub[7]);
+}
+
+void Octal::printTree()
+{
+	uint NaamDiepte = 0;
+    std::map<OctalNode*, std::string> NodeToNaam;
+	std::string Resultaat = printTree(Root, NodeToNaam, NaamDiepte);
+	std::cout << Resultaat << std::flush;
+
+	//printf("%s\n", Resultaat.c_str());
+}
+
+std::string GenereerNaam(uint NaamDiepte)
+{
+    std::string Naam = "";
+
+    int WerkDiepte = NaamDiepte;
+    bool GaDoor = true;
+
+    while(GaDoor)
+    {
+        uint SpecifiekeLetter = WerkDiepte % 26;
+        char Base = 'A' + SpecifiekeLetter;
+
+        Naam = Naam + Base;
+
+        WerkDiepte -= SpecifiekeLetter;
+		if(WerkDiepte <= 0)
+            GaDoor = false;
+
+        WerkDiepte /= 26;
+     }
+
+    return Naam;
+}
+
+
+std::string Octal::printTree(OctalNode * HuidigeNode, std::map<OctalNode*, std::string> & NodeToNaam, uint & NaamDiepte, std::string InSpring)
+{
+	NaamDiepte++;
+
+    std::string DezeNaam = GenereerNaam(NaamDiepte);
+
+    if(NodeToNaam.count(HuidigeNode) > 0)
+        printf("ERROR! Zelfde node komt twee keer voor.... Namelijk: %s\n", NodeToNaam[HuidigeNode].c_str());
+    else
+        NodeToNaam[HuidigeNode] = DezeNaam;
+
+	std::stringstream ReturnThis;
+	ReturnThis << InSpring << "Node " << DezeNaam << " (";
+	ReturnThis << ((int)(HuidigeNode->Kleur.x * 255)) << ", "<< ((int)(HuidigeNode->Kleur.y * 255))<<", " <<((int)(HuidigeNode->Kleur.z * 255))<<"): \n";
+
+
+	for(int i=0; i<8; i++)
+		ReturnThis << (HuidigeNode->Sub[i] == NULL ? "" : printTree(HuidigeNode->Sub[i], NodeToNaam, NaamDiepte, InSpring + "\t"));
+
+	return ReturnThis.str();
 }
 
 uint32_t Octal::ConvertOctalToShader(OctalNode* HuidigeNode, uint32_t& Counter, uint32_t Ouder, uint32_t SubIndex, uint32_t Diepte)

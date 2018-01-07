@@ -9,7 +9,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include "commonfunctions.h"
 
-#define OCTAL_MAX 32
+#define OCTAL_MAX 12
 
 struct OctalNode
 {
@@ -56,7 +56,11 @@ public:
     void ConvertOctalToShader();
     uint32_t MaxDepth = 0;
 
+    void printTree();
+
 private:
+	std::string printTree(OctalNode * HuidigeNode, std::map<OctalNode*, std::string> & NodeToNaam, uint & NaamDiepte, std::string InSpring = "\t");
+
     uint32_t ConvertOctalToShader(OctalNode * HuidigeNode, uint32_t &Counter, uint32_t Ouder, uint32_t SubIndex, uint32_t Diepte);
 
     std::map<OctalNode, uint32_t> OctalNodeToShaderIndex;

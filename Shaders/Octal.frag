@@ -1,5 +1,4 @@
 #version 440
-//#extension GL_ARB_compute_shader : enable
 #extension GL_ARB_shader_storage_buffer_object :   enable
 #extension GL_EXT_gpu_shader4 : enable
 
@@ -17,8 +16,8 @@ uniform float aspect;
 uniform vec3 RPos, GPos, BPos;
 uniform vec3 RGBFragMultiplier;
 
-#define MAXDIEPTE 20
-uniform int OCTAL_MAX;
+#define MAXDIEPTE 32
+uniform uint OCTAL_MAX;
 
 struct ShaderOctalNode
 {
@@ -46,26 +45,29 @@ Stack Pile[MAXDIEPTE];
 vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 {
     //uint NodeIndex  = 0;
-    //vec4 FaalKleur  = vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
+    vec4 FaalKleur  = vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
 
     vec3 InvRay         = vec3(1.0f) / Ray;
     const ivec3 Sign    = ivec3(Ray.x < 0, Ray.y < 0, Ray.z < 0);
-    vec4 FaalKleur      = vec4(1) - vec4(Sign, 0);
+    //vec4 FaalKleur      = vec4(1) - vec4(Sign, 0);
 
     vec3 CubeMin = vec3(TotalCubeBounds[  Sign.x].x, TotalCubeBounds[  Sign.y].y, TotalCubeBounds[  Sign.z].z);
     vec3 CubeMax = vec3(TotalCubeBounds[1-Sign.x].x, TotalCubeBounds[1-Sign.y].y, TotalCubeBounds[1-Sign.z].z);
 
+    //vec3 CubeMin = TotalCubeBounds[0];
+    //vec3 CubeMax = TotalCubeBounds[1];
+
     int Diepte = 0, SafetyValve = 100;
 
     Pile[Diepte].NodeIndex	= 0;
+    //Pile[Diepte].tmin = min((CubeMin - Begin) * InvRay, (CubeMax - Begin) * InvRay);
+    //Pile[Diepte].tmax = max((CubeMin - Begin) * InvRay, (CubeMax - Begin) * InvRay);
+
     Pile[Diepte].tmin = (CubeMin - Begin) * InvRay;
     Pile[Diepte].tmax = (CubeMax - Begin) * InvRay;
 
     while(Diepte >= 0 && Diepte < MAXDIEPTE)
     {
-        /*vec3 tmin = min(Pile[Diepte].tmin, Pile[Diepte].tmax);
-        vec3 tmax = max(Pile[Diepte].tmin, Pile[Diepte].tmax);*/
-
         vec3 tmin = Pile[Diepte].tmin;
         vec3 tmax = Pile[Diepte].tmax;
 
@@ -77,23 +79,30 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
         vec3 tmid = (tmin + tmax) * 0.5f;
 
-        ivec3 tpos = ivec3(int(tmid.x < minmax), int(tmid.y < minmax), int(tmid.z < minmax));
+        uvec3 tpos = ivec3(int(tmid.x <= minmax), int(tmid.y <= minmax), int(tmid.z <= minmax));
+        tpos = clamp(tpos, 0, 1);
 
-       // for(int i=0; i<3; i++)
-         //   if(Sign[i] == 1) tpos[i] = 1 - tpos[i];
+        uvec3 Assen;
 
+        for(int as=0; as<3; as++)
+            if(Sign[as] == 0) //Dan is deze richting blijkbaar positief in de ray.
+                Assen[as] = tpos[as];
+            else
+                Assen[as] = 1 - tpos[as];
 
-	int SubIndex = tpos.x + (2 * tpos.y) + (4 * tpos.z);
+        uint SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
 
-	uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
+        uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
 
-	//return Nodes.data[Pile[Diepte].NodeIndex].Kleur;;
+	//if(KindIndex <= Pile[Diepte].NodeIndex) //Dat kan niet kloppen toch?
+	  //   return vec4(1);
 
 	if(KindIndex != OCTAL_MAX)
 	{
 	    Diepte++;
 
 	    if(Diepte >= MAXDIEPTE) return vec4(0,0,0,0);
+	    //if(Diepte >= 1) return vec4(0,0,1,0);
 
 	    Pile[Diepte].NodeIndex = KindIndex;
 
@@ -101,13 +110,13 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 	    {
 		if(tpos[i] == 0)
 		{
-		    Pile[Diepte].tmin[i] = Pile[Diepte - 1].tmin[i];
+		    Pile[Diepte].tmin[i] = tmin[i];
 		    Pile[Diepte].tmax[i] = tmid[i];
 		}
 		else
 		{
 		    Pile[Diepte].tmin[i] = tmid[i];
-		    Pile[Diepte].tmax[i] = Pile[Diepte - 1].tmax[i];
+		    Pile[Diepte].tmax[i] = tmax[i];
 		}
 	    }
 	}
@@ -115,8 +124,10 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
         {
 	    //Kinderen zijn er niet. Dus kijken of we in een doorzichtige cel zitten of niet.
 
-	    //if(Nodes.data[Pile[Diepte].NodeIndex].Kleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
-		return Nodes.data[Pile[Diepte].NodeIndex].Kleur;
+		if(Nodes.data[Pile[Diepte].NodeIndex].Kleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
+			return Nodes.data[Pile[Diepte].NodeIndex].Kleur;
+		else
+			return FaalKleur;
 	        //return vec4(1 - (Diepte / MAXDIEPTE));
 
 	}

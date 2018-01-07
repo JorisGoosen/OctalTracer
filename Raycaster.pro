@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT		+= core gui opengl
+CONFIG	+= console
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

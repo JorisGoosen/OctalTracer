@@ -1,11 +1,18 @@
 #include "hoofdscherm.h"
 #include <QApplication>
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
+	srand(time_t(NULL));
     QApplication a(argc, argv);
     HoofdScherm w;
     w.show();
 
-    return a.exec();
+	int EindWaarde = a.exec();
+
+	std::cin.get();
+
+	return EindWaarde;
+
 }
