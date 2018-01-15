@@ -66,13 +66,6 @@ void Octal::ConvertOctalToShader()
     ConvertOctalToShader(Root, RunningCounter, OCTAL_MAX, OCTAL_MAX, 0);
 
     qDebug("Gevonden MaxDepth = %u\n", MaxDepth);
-
-    if(false)
-        for(int i=0; i<OCTAL_MAX; i++)
-            printf("(*ShaderTree)[%d](%1.2f,%1.2f,%1.2f) verwijst naar %u %u %u %u %u %u %u %u\n",i,
-                (*ShaderTree)[i].Kleur.x, (*ShaderTree)[i].Kleur.y, (*ShaderTree)[i].Kleur.z,
-                (*ShaderTree)[i].Sub[0], (*ShaderTree)[i].Sub[1],  (*ShaderTree)[i].Sub[2],  (*ShaderTree)[i].Sub[3],
-                (*ShaderTree)[i].Sub[4], (*ShaderTree)[i].Sub[5],  (*ShaderTree)[i].Sub[6],  (*ShaderTree)[i].Sub[7]);
 }
 
 void Octal::printTree()
@@ -112,9 +105,8 @@ std::string GenereerNaam(uint NaamDiepte)
 
 std::string Octal::printTree(OctalNode * HuidigeNode, std::map<OctalNode*, std::string> & NodeToNaam, uint & NaamDiepte, std::string InSpring)
 {
-	NaamDiepte++;
-
     std::string DezeNaam = GenereerNaam(NaamDiepte);
+	NaamDiepte++;
 
     if(NodeToNaam.count(HuidigeNode) > 0)
         printf("ERROR! Zelfde node komt twee keer voor.... Namelijk: %s\n", NodeToNaam[HuidigeNode].c_str());
@@ -123,7 +115,7 @@ std::string Octal::printTree(OctalNode * HuidigeNode, std::map<OctalNode*, std::
 
 	std::stringstream ReturnThis;
 	ReturnThis << InSpring << "Node " << DezeNaam << " (";
-	ReturnThis << ((int)(HuidigeNode->Kleur.x * 255)) << ", "<< ((int)(HuidigeNode->Kleur.y * 255))<<", " <<((int)(HuidigeNode->Kleur.z * 255))<<"): \n";
+	ReturnThis << ((int)(HuidigeNode->Kleur.x * 255)) << ", "<< ((int)(HuidigeNode->Kleur.y * 255))<<", " <<((int)(HuidigeNode->Kleur.z * 255))<<", " <<((int)(HuidigeNode->Kleur.a * 255))<<"): \n";
 
 
 	for(int i=0; i<8; i++)
@@ -141,7 +133,9 @@ uint32_t Octal::ConvertOctalToShader(OctalNode* HuidigeNode, uint32_t& Counter, 
 
     //(*ShaderTree)[HuidigeIndex].Ouder = Ouder;
     //(*ShaderTree)[HuidigeIndex].SubIndex = SubIndex;;
-    (*ShaderTree)[HuidigeIndex].Kleur = glm::mediump_vec4(HuidigeNode->Kleur);
+
+	(*ShaderTree)[HuidigeIndex].Kleur = glm::mediump_vec4(HuidigeNode->Kleur);
+
 
     for(int i=0; i<8; i++)
         (*ShaderTree)[HuidigeIndex].Sub[i] = HuidigeNode->Sub[i] == NULL ? OCTAL_MAX : ConvertOctalToShader(HuidigeNode->Sub[i], Counter, HuidigeIndex, i, Diepte + 1);

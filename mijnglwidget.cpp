@@ -42,6 +42,8 @@ void MijnGLWidget::initializeGL()
     m_projection.setToIdentity();
     m_projection.perspective(FovYScale, AspectRatio, NearDistance, FarDistance);
 
+	srand(time(NULL));
+	rand();
 
     //MijnPerlin = new Perlin(this);
     MijnOctal = new Octal(this);
@@ -79,7 +81,7 @@ void MijnGLWidget::paintGL()
     //MijnPerlin->BindBuffers();
     //m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
     MijnOctal->BindBuffer();
-    m_shader.setUniformValue("OCTAL_MAX", OCTAL_MAX);
+	m_shader.setUniformValue("OCTAL_MAX", uint(OCTAL_MAX));
 
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );

@@ -4,7 +4,8 @@
 
 int main(int argc, char *argv[])
 {
-	srand(time_t(NULL));
+
+
     QApplication a(argc, argv);
     HoofdScherm w;
     w.show();

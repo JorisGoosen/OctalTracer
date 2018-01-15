@@ -73,8 +73,6 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
         vec3 tmin = Pile[Diepte].tmin;
         vec3 tmax = Pile[Diepte].tmax;
 
-
-
         float maxmin = max(max(tmin.x, tmin.y), tmin.z);
         float minmax = min(min(tmax.x, tmax.y), tmax.z);
 
@@ -83,36 +81,26 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
         vec3 tmid = (tmin + tmax) * 0.5f;
 
-		//vec3 calcPos = round(maxmin * Ray);
-		//return vec4((calcPos - TotalCubeBounds[0]) / (TotalCubeBounds[1] - TotalCubeBounds[0]), 1);
-
-		//ivec3 tpos = ivec3(int(tmid.x <= maxmin), int(tmid.y <= maxmin), int(tmid.z <= maxmin));
-		//tpos = clamp(tpos, 0, 1);
-
-		ivec3 Assen;// = tpos;
-
-		//return vec4(Assen.x, Assen.y, Assen.z, 1);
+		uvec3 Assen;
 
 		for(int as=0; as<3; as++)
-			if(Sign[as] == 0) //Positief!
+			if(Sign[as] == 0) //Positief
 				Assen[as] = int(tmid[as] < maxmin);
 			else
 				Assen[as] = int(tmid[as] >= maxmin);
 
-		return vec4(Assen.x, Assen.y, Assen.z, 1);
+		uint SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
 
 
-		int SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
-		if(SubIndex < 0) return  vec4(0.3f);
-		if(SubIndex > 7) return  vec4(0.3f);
+		uint MijnIndex = Pile[Diepte].NodeIndex;
+		uint KindIndex	= Nodes.data[MijnIndex].Sub[SubIndex];
 
+		//if(MijnIndex == KindIndex) return vec4(0.5f, 0, 0.5f, 1.0f);
 
-		return Kleuren[SubIndex];
-
-		uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
 
 		if(KindIndex != OCTAL_MAX)
 		{
+
 			Diepte++;
 
 			if(Diepte >= MAXDIEPTE) return vec4(1,1,0,0);
@@ -122,32 +110,19 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
 			for(int i=0; i<3; i++)
 			{
-				if(Assen[i] == 0)
-				{
-					Pile[Diepte].tmin[i] = tmin[i];
-					Pile[Diepte].tmax[i] = tmid[i];
-				}
-				else
-				{
-					Pile[Diepte].tmin[i] = tmid[i];
-					Pile[Diepte].tmax[i] = tmax[i];
-				}
+				Pile[Diepte].tmin[i] = tmid[i] < maxmin ? tmid[i] : tmin[i];
+				Pile[Diepte].tmax[i] = tmid[i] < maxmin ? tmax[i] : tmid[i];
 			}
 		}
 		else
 		{
-			//Kinderen zijn er niet. Dus kijken of we in een doorzichtige cel zitten of niet.
+			vec4 GevondenNodeKleur =  Nodes.data[Pile[Diepte-1].NodeIndex].Kleur; //Why Diepte - 1???
 
-			return Kleuren[Diepte % 8];
-
-			if(true || Nodes.data[Pile[Diepte].NodeIndex].Kleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
-				return Nodes.data[Pile[Diepte].NodeIndex].Kleur;
+			if(GevondenNodeKleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
+				return GevondenNodeKleur;
 			else
-				return FaalKleur;
-			    //return vec4(1 - (Diepte / MAXDIEPTE));
-
+				return 0.9f * FaalKleur + 0.1f * GevondenNodeKleur;
 		}
-
     }
 
     if(Diepte >= MAXDIEPTE) return vec4(0, 0, 1, 1);
