@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 
 	int EindWaarde = a.exec();
 
-	std::cin.get();
+	//std::cin.get();
 
 	return EindWaarde;
 

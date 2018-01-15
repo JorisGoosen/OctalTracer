@@ -39,6 +39,7 @@ struct Stack
 };
 
 Stack Pile[MAXDIEPTE];
+vec4 Kleuren[8];
 
 // http://chiranjivi.tripod.com/octrav.html
 
@@ -48,10 +49,10 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
     vec4 FaalKleur  = vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
 
     vec3 InvRay         = vec3(1.0f) / Ray;
-    const ivec3 Sign    = ivec3(Ray.x < 0, Ray.y < 0, Ray.z < 0);
+	const ivec3 Sign    = ivec3(int(Ray.x < 0), int(Ray.y < 0), int(Ray.z < 0));
     //vec4 FaalKleur      = vec4(1) - vec4(Sign, 0);
 
-    vec3 CubeMin = vec3(TotalCubeBounds[  Sign.x].x, TotalCubeBounds[  Sign.y].y, TotalCubeBounds[  Sign.z].z);
+	vec3 CubeMin = vec3(TotalCubeBounds[  Sign.x].x, TotalCubeBounds[  Sign.y].y, TotalCubeBounds[  Sign.z].z);
     vec3 CubeMax = vec3(TotalCubeBounds[1-Sign.x].x, TotalCubeBounds[1-Sign.y].y, TotalCubeBounds[1-Sign.z].z);
 
     //vec3 CubeMin = TotalCubeBounds[0];
@@ -66,71 +67,86 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
     Pile[Diepte].tmin = (CubeMin - Begin) * InvRay;
     Pile[Diepte].tmax = (CubeMax - Begin) * InvRay;
 
+
     while(Diepte >= 0 && Diepte < MAXDIEPTE)
     {
         vec3 tmin = Pile[Diepte].tmin;
         vec3 tmax = Pile[Diepte].tmax;
 
+
+
         float maxmin = max(max(tmin.x, tmin.y), tmin.z);
         float minmax = min(min(tmax.x, tmax.y), tmax.z);
 
-	if(maxmin > minmax || (minmax < 0 && maxmin < 0))
+		if(maxmin > minmax || minmax < 0 || maxmin < 0)
             return FaalKleur;
 
         vec3 tmid = (tmin + tmax) * 0.5f;
 
-        uvec3 tpos = ivec3(int(tmid.x <= minmax), int(tmid.y <= minmax), int(tmid.z <= minmax));
-        tpos = clamp(tpos, 0, 1);
+		//vec3 calcPos = round(maxmin * Ray);
+		//return vec4((calcPos - TotalCubeBounds[0]) / (TotalCubeBounds[1] - TotalCubeBounds[0]), 1);
 
-        uvec3 Assen;
+		//ivec3 tpos = ivec3(int(tmid.x <= maxmin), int(tmid.y <= maxmin), int(tmid.z <= maxmin));
+		//tpos = clamp(tpos, 0, 1);
 
-        for(int as=0; as<3; as++)
-            if(Sign[as] == 0) //Dan is deze richting blijkbaar positief in de ray.
-                Assen[as] = tpos[as];
-            else
-                Assen[as] = 1 - tpos[as];
+		ivec3 Assen;// = tpos;
 
-        uint SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
+		//return vec4(Assen.x, Assen.y, Assen.z, 1);
 
-        uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
+		for(int as=0; as<3; as++)
+			if(Sign[as] == 0) //Positief!
+				Assen[as] = int(tmid[as] < maxmin);
+			else
+				Assen[as] = int(tmid[as] >= maxmin);
 
-	//if(KindIndex <= Pile[Diepte].NodeIndex) //Dat kan niet kloppen toch?
-	  //   return vec4(1);
+		return vec4(Assen.x, Assen.y, Assen.z, 1);
 
-	if(KindIndex != OCTAL_MAX)
-	{
-	    Diepte++;
 
-	    if(Diepte >= MAXDIEPTE) return vec4(0,0,0,0);
-	    //if(Diepte >= 1) return vec4(0,0,1,0);
+		int SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
+		if(SubIndex < 0) return  vec4(0.3f);
+		if(SubIndex > 7) return  vec4(0.3f);
 
-	    Pile[Diepte].NodeIndex = KindIndex;
 
-	    for(int i=0; i<3; i++)
-	    {
-		if(tpos[i] == 0)
+		return Kleuren[SubIndex];
+
+		uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
+
+		if(KindIndex != OCTAL_MAX)
 		{
-		    Pile[Diepte].tmin[i] = tmin[i];
-		    Pile[Diepte].tmax[i] = tmid[i];
+			Diepte++;
+
+			if(Diepte >= MAXDIEPTE) return vec4(1,1,0,0);
+			//if(Diepte >= 1) return vec4(0,0,1,0);
+
+			Pile[Diepte].NodeIndex = KindIndex;
+
+			for(int i=0; i<3; i++)
+			{
+				if(Assen[i] == 0)
+				{
+					Pile[Diepte].tmin[i] = tmin[i];
+					Pile[Diepte].tmax[i] = tmid[i];
+				}
+				else
+				{
+					Pile[Diepte].tmin[i] = tmid[i];
+					Pile[Diepte].tmax[i] = tmax[i];
+				}
+			}
 		}
 		else
 		{
-		    Pile[Diepte].tmin[i] = tmid[i];
-		    Pile[Diepte].tmax[i] = tmax[i];
+			//Kinderen zijn er niet. Dus kijken of we in een doorzichtige cel zitten of niet.
+
+			return Kleuren[Diepte % 8];
+
+			if(true || Nodes.data[Pile[Diepte].NodeIndex].Kleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
+				return Nodes.data[Pile[Diepte].NodeIndex].Kleur;
+			else
+				return FaalKleur;
+			    //return vec4(1 - (Diepte / MAXDIEPTE));
+
 		}
-	    }
-	}
-	else
-        {
-	    //Kinderen zijn er niet. Dus kijken of we in een doorzichtige cel zitten of niet.
-
-		if(Nodes.data[Pile[Diepte].NodeIndex].Kleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
-			return Nodes.data[Pile[Diepte].NodeIndex].Kleur;
-		else
-			return FaalKleur;
-	        //return vec4(1 - (Diepte / MAXDIEPTE));
-
-	}
 
     }
 
@@ -142,15 +158,24 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
 void main(void)
 {
-        //BolPos *= mat3(ModelView);
-        Origin = mat3(ModelView) * Translation;//vec4(-Translation, 0.0f) *  ModelView;
-        //Origin -= Translation;
+	Kleuren[0] = vec4(0, 0, 0, 1);
+	Kleuren[1] = vec4(0, 0, 1, 1);
+	Kleuren[2] = vec4(0, 1, 0, 1);
+	Kleuren[3] = vec4(1, 0, 0, 1);
+	Kleuren[4] = vec4(0, 1, 1, 1);
+	Kleuren[5] = vec4(1, 0, 1, 1);
+	Kleuren[6] = vec4(1, 1, 0, 1);
+	Kleuren[7] = vec4(1, 1, 1, 1);
 
-        vec3 curraydir =  mat3(ModelView) * normalize(vec3(TexPos.x * fov_y_scale * aspect, TexPos.y * fov_y_scale, 1.0)); //http://blog.hvidtfeldts.net/index.php/2014/01/combining-ray-tracing-and-polygons/
+	//BolPos *= mat3(ModelView);
+	Origin = mat3(ModelView) * Translation;//vec4(-Translation, 0.0f) *  ModelView;
+	//Origin -= Translation;
 
-         //if(curraydir.x < 0 || curraydir.y < 0 || curraydir.z < 0)
-        //   fColor = vec4(1);
-       // else
-            fColor = GetCubeIntersectColor(Origin, curraydir);
+	vec3 curraydir =  normalize(mat3(ModelView) * vec3(TexPos.x * fov_y_scale * aspect, TexPos.y * fov_y_scale, 1.0)); //http://blog.hvidtfeldts.net/index.php/2014/01/combining-ray-tracing-and-polygons/
+
+	 //if(curraydir.x < 0 || curraydir.y < 0 || curraydir.z < 0)
+	//   fColor = vec4(1);
+   // else
+	    fColor = GetCubeIntersectColor(Origin, curraydir);
 
 }
