@@ -75,13 +75,15 @@ void MijnGLWidget::paintGL()
     m_shader.setUniformValue("aspect", AspectRatio);
     m_shader.setUniformValue("RPos", ZonPos);
     m_shader.setUniformValue("GPos", ZonPos);
-    m_shader.setUniformValue("BPos", ZonPos);
+	m_shader.setUniformValue("BPos", ZonPos);
+
     m_shader.setUniformValue("Translation", Translatie);
     m_shader.setUniformValue( "RGBFragMultiplier", QVector3D(0.0f, 0.0f, 0.0f));
     //MijnPerlin->BindBuffers();
     //m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
     MijnOctal->BindBuffer();
 	m_shader.setUniformValue("OCTAL_MAX", uint(OCTAL_MAX));
+	m_shader.setUniformValue("MAXDIEPTE", MijnOctal->MaxDepth);
 
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );

@@ -24,6 +24,8 @@ void Octal::FillOctal()
 
     //int MaxLeeg = 6;
 
+	int Diepte = 0;
+
     while(Counter < OCTAL_MAX && Current != NULL)
     {
         bool Omlaag = Current->Ouder == NULL || rand()%2 ==0;
@@ -43,11 +45,16 @@ void Octal::FillOctal()
                     Current->Sub[RandSub]->Kleur.w = 0.0f; //Anders blijven we vastzitten..
 
                 if(Current->Sub[RandSub]->Kleur.w == 0.0f)
+				{
                     Current = Current->Sub[RandSub];
+					Diepte++;
+				}
             }
             else
             {
-                bool Leeg = RandSub < 7 && RandSub > 0;
+				//bool Leeg = RandSub < 7 && RandSub > 0;
+				//bool Leeg = RandSub == Diepte % 8;
+				bool Leeg = rand()%3 != 0;
 				Current->Sub[RandSub] = new OctalNode(glm::vec4(randcolor(), Leeg ? 0.0f : 1.0f), Current);
 				//Current->Sub[RandSub] = new OctalNode(glm::vec4(0.0f, 0.0f, 1.0f, Leeg ? 0.0f : 1.0f), Current);
                 Counter++;
@@ -55,7 +62,10 @@ void Octal::FillOctal()
             }
         }
         else
+		{
             Current = Current->Ouder;
+			Diepte--;
+		}
     }
 }
 

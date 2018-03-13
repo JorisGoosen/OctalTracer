@@ -16,15 +16,13 @@ uniform float aspect;
 uniform vec3 RPos, GPos, BPos;
 uniform vec3 RGBFragMultiplier;
 
-#define MAXDIEPTE 32
+uniform uint MAXDIEPTE;
 uniform uint OCTAL_MAX;
 
 struct ShaderOctalNode
 {
     vec4 Kleur;
     uint Sub[8];
-    //uint Ouder, SubIndex;
-    //uint Padding[2];
 };
 
 layout(std430, binding = 0) buffer ShaderTree	{ ShaderOctalNode data[]; } Nodes;
@@ -36,20 +34,15 @@ vec3 TotalCubeBounds[2] = {vec3(-2.5f), vec3(2.5f)};
 
 vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 {
-    //uint NodeIndex  = 0;
     vec4 FaalKleur  = vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
 
     vec3 InvRay         = vec3(1.0f) / Ray;
 	const ivec3 Sign    = ivec3(int(Ray.x < 0), int(Ray.y < 0), int(Ray.z < 0));
-    //vec4 FaalKleur      = vec4(1) - vec4(Sign, 0);
 
 	vec3 CubeMin = vec3(TotalCubeBounds[  Sign.x].x, TotalCubeBounds[  Sign.y].y, TotalCubeBounds[  Sign.z].z);
     vec3 CubeMax = vec3(TotalCubeBounds[1-Sign.x].x, TotalCubeBounds[1-Sign.y].y, TotalCubeBounds[1-Sign.z].z);
 
-    //vec3 CubeMin = TotalCubeBounds[0];
-    //vec3 CubeMax = TotalCubeBounds[1];
-
-    int Diepte = 0, SafetyValve = 100;
+	int Diepte = 0;
 
 	vec3 original_tmin = (CubeMin - Begin) * InvRay, original_tmax = (CubeMax - Begin) * InvRay;
 
@@ -60,7 +53,7 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
 
 
-    while(Diepte >= 0 && Diepte < MAXDIEPTE)
+	while(Diepte >= 0)
     {
 		maxmin = max(minimumMaxMin, max(max(tmin.x, tmin.y), tmin.z));
 		minmax = min(min(tmax.x, tmax.y), tmax.z);
@@ -84,8 +77,6 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
 			Diepte++;
 
-			if(Diepte >= MAXDIEPTE) return vec4(1,1,0,0);
-
 			PreviousNodeIndex	= NodeIndex;
 			NodeIndex			= KindIndex;
 
@@ -106,16 +97,14 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 				Diepte				= 0;
 				NodeIndex			= 0;
 				PreviousNodeIndex	= 0;
-				minimumMaxMin		= minmax + 0.001f;
+				minimumMaxMin		= minmax + max(0.0001f, (minmax - maxmin) * 0.001f);
 				tmin				= original_tmin;
 				tmax				= original_tmax;
 			}
 		}
     }
 
-    if(Diepte >= MAXDIEPTE) return vec4(0, 0, 1, 1);
-
-    return FaalKleur;
+	return vec4(1.0f);
 }
 
 
