@@ -91,9 +91,7 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
 		uint SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
 
-
-		uint MijnIndex = Pile[Diepte].NodeIndex;
-		uint KindIndex	= Nodes.data[MijnIndex].Sub[SubIndex];
+		uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
 
 		//if(MijnIndex == KindIndex) return vec4(0.5f, 0, 0.5f, 1.0f);
 
@@ -116,12 +114,65 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 		}
 		else
 		{
-			vec4 GevondenNodeKleur =  Nodes.data[Pile[Diepte-1].NodeIndex].Kleur; //Why Diepte - 1???
+			Diepte--;
+			vec4 GevondenNodeKleur =  Nodes.data[Pile[Diepte].NodeIndex].Kleur; //Why Diepte - 1???
 
 			if(GevondenNodeKleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
 				return GevondenNodeKleur;
-			else
-				return 0.9f * FaalKleur + 0.1f * GevondenNodeKleur;
+			//else
+			    //return 0.9f * FaalKleur + 0.1f * GevondenNodeKleur;
+
+			//Dan moeten we omhoog en de volgende vinden
+			//Dat moet in een richting, namelijk die van het eerste asvlak dat we snijden.
+			//minmax helpt
+			bool GaDoor = true;
+			while(GaDoor)
+			{
+				Diepte--;
+
+				if(Diepte < 0)
+					return FaalKleur;
+
+				vec3 bovtmax = Pile[Diepte].tmax;
+
+				for(int i=0; i<3; i++)
+					if(bovtmax[i] > minmax) //Dan is er namelijk ruimte om aan de andere kant weer naar beneden te gaan
+						GaDoor = false;
+
+				if(!GaDoor)
+				{
+					tmin = Pile[Diepte].tmin;
+					tmax = Pile[Diepte].tmax;
+					tmid = (tmin + tmax) * 0.5f;
+
+					for(int as=0; as<3; as++)
+						if(Sign[as] == 0) //Positief
+							Assen[as] = int(tmid[as] < minmax);
+						else
+							Assen[as] = int(tmid[as] >= minmax);
+
+					SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
+					KindIndex = Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
+
+					if(KindIndex == OCTAL_MAX)
+						GaDoor = true;
+					else
+						Diepte++;
+				}
+
+
+			}
+
+
+			Diepte++;
+
+			Pile[Diepte].NodeIndex = KindIndex;
+
+			for(int i=0; i<3; i++)
+			{
+				Pile[Diepte].tmin[i] = tmid[i] < minmax ? tmid[i] : tmin[i];
+				Pile[Diepte].tmax[i] = tmid[i] < minmax ? tmax[i] : tmid[i];
+			}
 		}
     }
 
