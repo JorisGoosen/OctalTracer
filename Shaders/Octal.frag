@@ -67,16 +67,17 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
     Pile[Diepte].tmin = (CubeMin - Begin) * InvRay;
     Pile[Diepte].tmax = (CubeMax - Begin) * InvRay;
 
+	float minimumMaxMin = 0.0f;
 
     while(Diepte >= 0 && Diepte < MAXDIEPTE)
     {
         vec3 tmin = Pile[Diepte].tmin;
         vec3 tmax = Pile[Diepte].tmax;
 
-        float maxmin = max(max(tmin.x, tmin.y), tmin.z);
+		float maxmin = max(minimumMaxMin, max(max(tmin.x, tmin.y), tmin.z));
         float minmax = min(min(tmax.x, tmax.y), tmax.z);
 
-		if(maxmin > minmax || minmax < 0 || maxmin < 0)
+		if(maxmin >= minmax || minmax < 0 || maxmin < 0)
             return FaalKleur;
 
         vec3 tmid = (tmin + tmax) * 0.5f;
@@ -87,14 +88,10 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 			if(Sign[as] == 0) //Positief
 				Assen[as] = int(tmid[as] < maxmin);
 			else
-				Assen[as] = int(tmid[as] >= maxmin);
+				Assen[as] = int(tmid[as] > maxmin);
 
-		uint SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
-
+		uint SubIndex	= Assen.x + (2 * Assen.y) + (4 * Assen.z);
 		uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
-
-		//if(MijnIndex == KindIndex) return vec4(0.5f, 0, 0.5f, 1.0f);
-
 
 		if(KindIndex != OCTAL_MAX)
 		{
@@ -119,59 +116,11 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
 			if(GevondenNodeKleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
 				return GevondenNodeKleur;
-			//else
-			    //return 0.9f * FaalKleur + 0.1f * GevondenNodeKleur;
-
-			//Dan moeten we omhoog en de volgende vinden
-			//Dat moet in een richting, namelijk die van het eerste asvlak dat we snijden.
-			//minmax helpt
-			bool GaDoor = true;
-			while(GaDoor)
+			else
 			{
-				Diepte--;
-
-				if(Diepte < 0)
-					return FaalKleur;
-
-				vec3 bovtmax = Pile[Diepte].tmax;
-
-				for(int i=0; i<3; i++)
-					if(bovtmax[i] > minmax) //Dan is er namelijk ruimte om aan de andere kant weer naar beneden te gaan
-						GaDoor = false;
-
-				if(!GaDoor)
-				{
-					tmin = Pile[Diepte].tmin;
-					tmax = Pile[Diepte].tmax;
-					tmid = (tmin + tmax) * 0.5f;
-
-					for(int as=0; as<3; as++)
-						if(Sign[as] == 0) //Positief
-							Assen[as] = int(tmid[as] < minmax);
-						else
-							Assen[as] = int(tmid[as] >= minmax);
-
-					SubIndex = Assen.x + (2 * Assen.y) + (4 * Assen.z);
-					KindIndex = Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
-
-					if(KindIndex == OCTAL_MAX)
-						GaDoor = true;
-					else
-						Diepte++;
-				}
-
-
-			}
-
-
-			Diepte++;
-
-			Pile[Diepte].NodeIndex = KindIndex;
-
-			for(int i=0; i<3; i++)
-			{
-				Pile[Diepte].tmin[i] = tmid[i] < minmax ? tmid[i] : tmin[i];
-				Pile[Diepte].tmax[i] = tmid[i] < minmax ? tmax[i] : tmid[i];
+				//return FaalKleur * 0.5f;
+				Diepte = 0;
+				minimumMaxMin = minmax + 0.001f;
 			}
 		}
     }

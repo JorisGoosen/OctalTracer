@@ -21,7 +21,7 @@ class MijnGLWidget : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 public:
     MijnGLWidget(QWidget *parent) : QOpenGLWidget(parent)
     {
-        Translatie = QVector3D(0, 0, -4);
+		Translatie = QVector3D(0, 0, -8);
     }
 
     void keyPressEvent( QKeyEvent* e );

@@ -9,7 +9,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include "commonfunctions.h"
 
-const uint32_t OCTAL_MAX = 8;
+const uint32_t OCTAL_MAX = 1024;
 
 struct OctalNode
 {
