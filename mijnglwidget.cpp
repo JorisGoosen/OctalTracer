@@ -47,7 +47,7 @@ void MijnGLWidget::initializeGL()
 
     //MijnPerlin = new Perlin(this);
     MijnOctal = new Octal(this);
-	MijnOctal->printTree();
+	//MijnOctal->printTree();
 }
 
 void MijnGLWidget::resizeGL(int w, int h)

@@ -32,15 +32,6 @@ layout(std430, binding = 0) buffer ShaderTree	{ ShaderOctalNode data[]; } Nodes;
 vec3 Origin;
 vec3 TotalCubeBounds[2] = {vec3(-2.5f), vec3(2.5f)};
 
-struct Stack
-{
-    uint NodeIndex;
-    vec3 tmin, tmax;
-};
-
-Stack Pile[MAXDIEPTE];
-vec4 Kleuren[8];
-
 // http://chiranjivi.tripod.com/octrav.html
 
 vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
@@ -60,29 +51,24 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
     int Diepte = 0, SafetyValve = 100;
 
-    Pile[Diepte].NodeIndex	= 0;
-    //Pile[Diepte].tmin = min((CubeMin - Begin) * InvRay, (CubeMax - Begin) * InvRay);
-    //Pile[Diepte].tmax = max((CubeMin - Begin) * InvRay, (CubeMax - Begin) * InvRay);
+	vec3 original_tmin = (CubeMin - Begin) * InvRay, original_tmax = (CubeMax - Begin) * InvRay;
 
-    Pile[Diepte].tmin = (CubeMin - Begin) * InvRay;
-    Pile[Diepte].tmax = (CubeMax - Begin) * InvRay;
+	float minimumMaxMin = 0.0f, minmax, maxmin;
+	vec3 tmin = original_tmin, tmax = original_tmax, tmid;
+	uvec3 Assen;
+	uint SubIndex, KindIndex, NodeIndex = 0, PreviousNodeIndex = 0;
 
-	float minimumMaxMin = 0.0f;
+
 
     while(Diepte >= 0 && Diepte < MAXDIEPTE)
     {
-        vec3 tmin = Pile[Diepte].tmin;
-        vec3 tmax = Pile[Diepte].tmax;
-
-		float maxmin = max(minimumMaxMin, max(max(tmin.x, tmin.y), tmin.z));
-        float minmax = min(min(tmax.x, tmax.y), tmax.z);
+		maxmin = max(minimumMaxMin, max(max(tmin.x, tmin.y), tmin.z));
+		minmax = min(min(tmax.x, tmax.y), tmax.z);
 
 		if(maxmin >= minmax || minmax < 0 || maxmin < 0)
             return FaalKleur;
 
-        vec3 tmid = (tmin + tmax) * 0.5f;
-
-		uvec3 Assen;
+		tmid = (tmin + tmax) * 0.5f;
 
 		for(int as=0; as<3; as++)
 			if(Sign[as] == 0) //Positief
@@ -90,8 +76,8 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 			else
 				Assen[as] = int(tmid[as] > maxmin);
 
-		uint SubIndex	= Assen.x + (2 * Assen.y) + (4 * Assen.z);
-		uint KindIndex	= Nodes.data[Pile[Diepte].NodeIndex].Sub[SubIndex];
+		SubIndex	= Assen.x + (2 * Assen.y) + (4 * Assen.z);
+		KindIndex	= Nodes.data[NodeIndex].Sub[SubIndex];
 
 		if(KindIndex != OCTAL_MAX)
 		{
@@ -99,28 +85,30 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 			Diepte++;
 
 			if(Diepte >= MAXDIEPTE) return vec4(1,1,0,0);
-			//if(Diepte >= 1) return vec4(0,0,1,0);
 
-			Pile[Diepte].NodeIndex = KindIndex;
+			PreviousNodeIndex	= NodeIndex;
+			NodeIndex			= KindIndex;
 
 			for(int i=0; i<3; i++)
 			{
-				Pile[Diepte].tmin[i] = tmid[i] < maxmin ? tmid[i] : tmin[i];
-				Pile[Diepte].tmax[i] = tmid[i] < maxmin ? tmax[i] : tmid[i];
+				tmin[i] = tmid[i] < maxmin ? tmid[i] : tmin[i];
+				tmax[i] = tmid[i] < maxmin ? tmax[i] : tmid[i];
 			}
 		}
 		else
 		{
-			Diepte--;
-			vec4 GevondenNodeKleur =  Nodes.data[Pile[Diepte].NodeIndex].Kleur; //Why Diepte - 1???
+			vec4 GevondenNodeKleur =  Nodes.data[PreviousNodeIndex].Kleur;
 
-			if(GevondenNodeKleur.a > 0.5f) //En ik ben niet doorzichtig dus mijn echte kleur returnen:
+			if(GevondenNodeKleur.a > 0.5f)
 				return GevondenNodeKleur;
 			else
 			{
-				//return FaalKleur * 0.5f;
-				Diepte = 0;
-				minimumMaxMin = minmax + 0.001f;
+				Diepte				= 0;
+				NodeIndex			= 0;
+				PreviousNodeIndex	= 0;
+				minimumMaxMin		= minmax + 0.001f;
+				tmin				= original_tmin;
+				tmax				= original_tmax;
 			}
 		}
     }
@@ -133,24 +121,8 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 
 void main(void)
 {
-	Kleuren[0] = vec4(0, 0, 0, 1);
-	Kleuren[1] = vec4(0, 0, 1, 1);
-	Kleuren[2] = vec4(0, 1, 0, 1);
-	Kleuren[3] = vec4(1, 0, 0, 1);
-	Kleuren[4] = vec4(0, 1, 1, 1);
-	Kleuren[5] = vec4(1, 0, 1, 1);
-	Kleuren[6] = vec4(1, 1, 0, 1);
-	Kleuren[7] = vec4(1, 1, 1, 1);
-
-	//BolPos *= mat3(ModelView);
 	Origin = mat3(ModelView) * Translation;//vec4(-Translation, 0.0f) *  ModelView;
-	//Origin -= Translation;
-
 	vec3 curraydir =  normalize(mat3(ModelView) * vec3(TexPos.x * fov_y_scale * aspect, TexPos.y * fov_y_scale, 1.0)); //http://blog.hvidtfeldts.net/index.php/2014/01/combining-ray-tracing-and-polygons/
-
-	 //if(curraydir.x < 0 || curraydir.y < 0 || curraydir.z < 0)
-	//   fColor = vec4(1);
-   // else
-	    fColor = GetCubeIntersectColor(Origin, curraydir);
+	fColor = GetCubeIntersectColor(Origin, curraydir);
 
 }
