@@ -51,15 +51,16 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 	uvec3 Assen;
 	uint SubIndex, KindIndex, NodeIndex = 0, PreviousNodeIndex = 0;
 
-
+	float descends = 1.0f;
 
 	while(Diepte >= 0)
     {
+
 		maxmin = max(minimumMaxMin, max(max(tmin.x, tmin.y), tmin.z));
 		minmax = min(min(tmax.x, tmax.y), tmax.z);
 
 		if(maxmin >= minmax || minmax < 0 || maxmin < 0)
-            return FaalKleur;
+			return FaalKleur * descends;
 
 		tmid = (tmin + tmax) * 0.5f;
 
@@ -91,7 +92,7 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 			vec4 GevondenNodeKleur =  Nodes.data[PreviousNodeIndex].Kleur;
 
 			if(GevondenNodeKleur.a > 0.5f)
-				return GevondenNodeKleur;
+				return GevondenNodeKleur * descends;
 			else
 			{
 				Diepte				= 0;
@@ -100,6 +101,8 @@ vec4 GetCubeIntersectColor(vec3 Begin, vec3 Ray)
 				minimumMaxMin		= minmax + max(0.0001f, (minmax - maxmin) * 0.001f);
 				tmin				= original_tmin;
 				tmax				= original_tmax;
+
+				descends -= 0.05f;
 			}
 		}
     }

@@ -54,7 +54,7 @@ void Octal::FillOctal()
             {
 				//bool Leeg = RandSub < 7 && RandSub > 0;
 				//bool Leeg = RandSub == Diepte % 8;
-				bool Leeg = rand()%3 != 0;
+				bool Leeg = Diepte < 5 || rand()%4 != 0;
 				Current->Sub[RandSub] = new OctalNode(glm::vec4(randcolor(), Leeg ? 0.0f : 1.0f), Current);
 				//Current->Sub[RandSub] = new OctalNode(glm::vec4(0.0f, 0.0f, 1.0f, Leeg ? 0.0f : 1.0f), Current);
                 Counter++;
@@ -67,6 +67,33 @@ void Octal::FillOctal()
 			Diepte--;
 		}
     }
+
+	Root->PruneEmptyChildren();
+}
+
+bool OctalNode::PruneEmptyChildren()
+{
+	bool allChildrenAreEmpty = true;
+	bool IHaveNoChildren = true;
+
+	for(int i=0; i<8; i++)
+		if(Sub[i] != NULL)
+		{
+			IHaveNoChildren = false;
+
+			if(!Sub[i]->PruneEmptyChildren())
+				allChildrenAreEmpty = false;
+			else
+			{
+				delete Sub[i];
+				Sub[i] = NULL;
+			}
+		}
+
+	if(IHaveNoChildren)
+		return Kleur.a < 0.5;
+
+	return allChildrenAreEmpty;
 }
 
 void Octal::ConvertOctalToShader()

@@ -35,6 +35,9 @@ struct OctalNode
     glm::vec4 Kleur;
     OctalNode * Sub[8];
     OctalNode * Ouder = NULL;
+
+	///returns true if everything below is empty
+	bool PruneEmptyChildren();
 };
 
 struct ShaderOctalNode
