@@ -9,7 +9,9 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include "commonfunctions.h"
 
-const uint32_t OCTAL_MAX = 8092 * 12;
+const uint32_t OCTAL_MAX = 8092 * 64;
+
+typedef glm::vec4(*samplerFunc)(glm::vec3);
 
 struct OctalNode
 {
@@ -32,12 +34,17 @@ struct OctalNode
         Ouder = JeOuder;
     }
 
+	void createChildForDepthWithSampler(samplerFunc sampler, int Diepte, glm::vec3 Coordinaat = glm::vec3(0.0f), float KubusRad = 1.0f);
+
     glm::vec4 Kleur;
     OctalNode * Sub[8];
     OctalNode * Ouder = NULL;
 
 	///returns true if everything below is empty
 	bool PruneEmptyChildren();
+
+	///reeturns true if everything below it is a child that is visible
+	bool MergeFullChildren();
 };
 
 struct ShaderOctalNode
@@ -56,6 +63,7 @@ public:
 
     void BindBuffer(int BindOctalTree = 0) {	ShaderTree->BindBufferStorage(BindOctalTree);	}
     void FillOctal();
+	void CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth);
 
     void ConvertOctalToShader();
     uint32_t MaxDepth = 0;

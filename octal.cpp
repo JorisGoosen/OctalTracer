@@ -3,11 +3,36 @@
 #include <iostream>
 #include <stack>
 
+glm::vec4 simpleSampler(glm::vec3 coord)
+{
+	if(glm::length(coord) < 0.8f)
+		return glm::vec4(randcolor(), 1.0f);
+	return glm::vec4(0.0f);
+}
+
+glm::vec4 simpleSamplerInverted(glm::vec3 coord)
+{
+	if(glm::length(coord) > 1.1f)
+		return glm::vec4(randcolor(), 1.0f);
+	return glm::vec4(0.0f);
+}
+
+
+glm::vec4 doubleWhammy(glm::vec3 coord)
+{
+	if(glm::length(coord) > 1.2f || glm::length(coord) < 0.75f)
+		return glm::vec4((coord * 0.5f) + 0.5f, 1.0f);
+	return glm::vec4(0.0f);
+}
+
+
+
 Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
 {
     ShaderTree = new shaderstorage<ShaderOctalNode>(OCTAL_MAX, QTGL);
 
-    FillOctal();
+	//FillOctal();
+	CreateOctalFromSamplerFunc(doubleWhammy, 8); //Dont do 9+
 
     ConvertOctalToShader();
 
@@ -48,7 +73,7 @@ void Octal::FillOctal()
 			glm::vec3 rel(x==0 ? -1.0f : 1.0f, y==0 ? -1.0f : 1.0f, z==0 ? -1.0f : 1.0f);
 
 			glm::vec3 curCoord(Coordinaat + (rel * KubusRadius * 0.5f));
-			const float sphereRad = 0.8f;
+			const float sphereRad = 0.85f;
 
 
 
@@ -94,6 +119,37 @@ void Octal::FillOctal()
 	Root->PruneEmptyChildren();
 }
 
+void OctalNode::createChildForDepthWithSampler(samplerFunc sampler, int Diepte, glm::vec3 Coordinaat, float KubusRadius)
+{
+	if(Diepte == 0)
+		Kleur = (*sampler)(Coordinaat);
+	else
+		for(int x=0; x<2; x++)
+			for(int y=0; y<2; y++)
+				for(int z=0; z<2; z++)
+				{
+					glm::vec3 rel(x==0 ? -1.0f : 1.0f, y==0 ? -1.0f : 1.0f, z==0 ? -1.0f : 1.0f);
+					glm::vec3 curCoord(Coordinaat + (rel * KubusRadius * 0.5f));
+
+					uint SubIndex = x + (y * 2) + (z * 4);
+					Sub[SubIndex] = new OctalNode(this);
+					Sub[SubIndex]->createChildForDepthWithSampler(sampler, Diepte - 1, curCoord, KubusRadius * 0.5f);
+				}
+}
+
+
+
+
+void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth)
+{
+	Root = new OctalNode();
+
+	Root->createChildForDepthWithSampler(sampler, Depth);
+
+	Root->PruneEmptyChildren();
+	Root->MergeFullChildren();
+}
+
 bool OctalNode::PruneEmptyChildren()
 {
 	bool allChildrenAreEmpty = true;
@@ -117,6 +173,40 @@ bool OctalNode::PruneEmptyChildren()
 		return Kleur.a < 0.5;
 
 	return allChildrenAreEmpty;
+}
+
+bool OctalNode::MergeFullChildren()
+{
+	bool allChildrenAreFull = true;
+	int iHaveThisManyChildren = 0;
+
+	glm::vec4 AvgCol(0.0f);
+
+	for(int i=0; i<8; i++)
+		if(Sub[i] != NULL)
+		{
+			iHaveThisManyChildren++;
+
+			if(!Sub[i]->MergeFullChildren())
+				allChildrenAreFull = false;
+
+			AvgCol += Sub[i]->Kleur;
+		}
+
+	if(iHaveThisManyChildren == 8 && allChildrenAreFull)
+	{
+		Kleur = AvgCol / 8.0f;
+
+		for(int i=0; i<8; i++)
+		{
+			delete Sub[i];
+			Sub[i] = NULL;
+		}
+
+		return Kleur.a > 0.5; //Should always be true anyway
+	}
+
+	return iHaveThisManyChildren == 0 && Kleur.a > 0.5f;
 }
 
 void Octal::ConvertOctalToShader()
