@@ -1,6 +1,7 @@
 #include "octal.h"
 #include <sstream>
 #include <iostream>
+#include <stack>
 
 Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
 {
@@ -26,35 +27,54 @@ void Octal::FillOctal()
 
 	int Diepte = 0;
 
+	glm::vec3 Coordinaat(0.0f);
+	float KubusRadius = 1.0f; //1 in iedere richting
+	std::stack<glm::vec3> vorigeCoordinaten;
+
     while(Counter < OCTAL_MAX && Current != NULL)
     {
-        bool Omlaag = Current->Ouder == NULL || rand()%2 ==0;
+		bool ThereIsOneSeeThrough = false;
+		for(int i=0; i<8; i++)
+			if(Current->Sub[i] == NULL || Current->Sub[i]->Kleur.w == 0.0f)
+				ThereIsOneSeeThrough = true;
+
+		bool Omlaag = Current->Ouder == NULL || (rand()%2 ==0 && ThereIsOneSeeThrough);
 
         if(Omlaag)
         {
-            bool ThereIsOneSeeThrough = false;
-            for(int i=0; i<8; i++)
-                if(Current->Sub[i] == NULL || Current->Sub[i]->Kleur.w == 0.0f)
-                    ThereIsOneSeeThrough = true;
-
             int RandSub = rand()%8;
+
+			int x = RandSub%2, y = (RandSub-x)%4 > 0, z=(RandSub-x-(y*4))%8 >0;
+			glm::vec3 rel(x==0 ? -1.0f : 1.0f, y==0 ? -1.0f : 1.0f, z==0 ? -1.0f : 1.0f);
+
+			glm::vec3 curCoord(Coordinaat + (rel * KubusRadius * 0.5f));
+			const float sphereRad = 0.8f;
+
+
 
             if(Current->Sub[RandSub] != NULL)
             {
-                if(!ThereIsOneSeeThrough)
-                    Current->Sub[RandSub]->Kleur.w = 0.0f; //Anders blijven we vastzitten..
 
                 if(Current->Sub[RandSub]->Kleur.w == 0.0f)
 				{
                     Current = Current->Sub[RandSub];
 					Diepte++;
+
+					vorigeCoordinaten.push(Coordinaat);
+
+
+					KubusRadius *= 0.5f;
+					Coordinaat = curCoord;
+
 				}
             }
             else
             {
 				//bool Leeg = RandSub < 7 && RandSub > 0;
 				//bool Leeg = RandSub == Diepte % 8;
-				bool Leeg = Diepte < 5 || rand()%4 != 0;
+				bool Leeg = Diepte < 3 || glm::length(curCoord) > sphereRad;
+				//bool Leeg = Diepte < 4 || rand()%6 != 0;
+				//bool Leeg = Diepte < 5 || rand()%4 != 0;
 				Current->Sub[RandSub] = new OctalNode(glm::vec4(randcolor(), Leeg ? 0.0f : 1.0f), Current);
 				//Current->Sub[RandSub] = new OctalNode(glm::vec4(0.0f, 0.0f, 1.0f, Leeg ? 0.0f : 1.0f), Current);
                 Counter++;
@@ -65,6 +85,9 @@ void Octal::FillOctal()
 		{
             Current = Current->Ouder;
 			Diepte--;
+			Coordinaat = vorigeCoordinaten.top();
+			vorigeCoordinaten.pop();
+			KubusRadius *= 2.0f;
 		}
     }
 
