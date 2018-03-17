@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stack>
 
+
 glm::vec4 simpleSampler(glm::vec3 coord)
 {
 	if(glm::length(coord) < 0.8f)
@@ -25,6 +26,13 @@ glm::vec4 doubleWhammy(glm::vec3 coord)
 	return glm::vec4(0.0f);
 }
 
+glm::vec4 perlinNoise(glm::vec3 coord)
+{
+	//if( > 0.5)
+		//return glm::vec4(, 1.0f);
+	return glm::vec4((coord * 0.5f) + 0.5f, sqrt(glm::clamp(Perlin::thePerlin()->GetIniqoQuilesNoise(coord * 0.1f), 0.0f, 1.0f)));
+}
+
 
 
 Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
@@ -32,7 +40,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
     ShaderTree = new shaderstorage<ShaderOctalNode>(OCTAL_MAX, QTGL);
 
 	//FillOctal();
-	CreateOctalFromSamplerFunc(doubleWhammy, 8); //Dont do 9+
+	CreateOctalFromSamplerFunc(perlinNoise, 6); //Dont do 9+
 
     ConvertOctalToShader();
 
@@ -150,6 +158,8 @@ void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth)
 	Root->MergeFullChildren();
 }
 
+const float considerThisEmpty = 0.1;
+
 bool OctalNode::PruneEmptyChildren()
 {
 	bool allChildrenAreEmpty = true;
@@ -170,7 +180,7 @@ bool OctalNode::PruneEmptyChildren()
 		}
 
 	if(IHaveNoChildren)
-		return Kleur.a < 0.5;
+		return Kleur.a < considerThisEmpty;
 
 	return allChildrenAreEmpty;
 }
@@ -203,10 +213,10 @@ bool OctalNode::MergeFullChildren()
 			Sub[i] = NULL;
 		}
 
-		return Kleur.a > 0.5; //Should always be true anyway
+		return Kleur.a > 1.0f - considerThisEmpty; //Should always be true anyway
 	}
 
-	return iHaveThisManyChildren == 0 && Kleur.a > 0.5f;
+	return iHaveThisManyChildren == 0 && Kleur.a > 1.0f - considerThisEmpty;
 }
 
 void Octal::ConvertOctalToShader()

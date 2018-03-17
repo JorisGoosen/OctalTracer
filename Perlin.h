@@ -21,6 +21,9 @@ public:
 		
     glm::mediump_vec3   GetGradient(glm::ivec3 loc);
     float 		GetIniqoQuilesNoise(glm::vec3 x);
+
+	static Perlin * thePerlin() { return _Perlin; }
+	static Perlin * _Perlin;
 	
 private:
 	void		InitGradients();

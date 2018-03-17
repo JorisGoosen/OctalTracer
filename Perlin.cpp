@@ -4,7 +4,10 @@ Perlin::Perlin(QOpenGLFunctions_4_5_Core *QTGL)
 {
     GL = QTGL;
 	Init();
+	_Perlin = this;
 }
+
+Perlin * Perlin::_Perlin = NULL;
 
 void Perlin::Init()
 {
@@ -68,9 +71,14 @@ glm::mediump_vec3 Perlin::GetGradient(glm::ivec3 loc)
 {
     int ijk[3];
     for(int i=0; i<3; i++)
-        ijk[i] = ((int)loc[i]) % PERLIN_NUM_GRADIENTS;
+		ijk[i] = (PERLIN_NUM_GRADIENTS + ((int)loc[i])) % PERLIN_NUM_GRADIENTS;
 
-    int DezeGradient = (*PermutationTable)[(*PermutationTable)[(*PermutationTable)[ijk[0]] + ijk[1]] + ijk[2]];
+	int DezeGradient =	(*PermutationTable)[
+							(*PermutationTable)[
+								(*PermutationTable)[
+									ijk[0]] +
+								ijk[1]] +
+						ijk[2]];
 
     return (*RandomGradients)[DezeGradient];
 }

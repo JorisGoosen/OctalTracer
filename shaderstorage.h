@@ -14,7 +14,7 @@ public:
 	DataStructuur*	LeesUit();
 	int				Lengte()				{ return Grootte; }
 	void			SluitInleesRange();
-	DataStructuur& 	operator[](int idx)		{ return Data[idx]; };
+	DataStructuur& 	operator[](int idx)		{ return Data[idx]; }
 	
 private:
 	DataStructuur 	*Data;

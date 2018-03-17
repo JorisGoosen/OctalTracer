@@ -45,7 +45,7 @@ void MijnGLWidget::initializeGL()
 	srand(time(NULL));
 	rand();
 
-    //MijnPerlin = new Perlin(this);
+	MijnPerlin = new Perlin(this);
     MijnOctal = new Octal(this);
 	//MijnOctal->printTree();
 }

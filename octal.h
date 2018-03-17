@@ -8,10 +8,12 @@
 //#include <queue>
 #include <QOpenGLFunctions_4_5_Core>
 #include "commonfunctions.h"
+#include "Perlin.h"
 
 const uint32_t OCTAL_MAX = 8092 * 64;
 
 typedef glm::vec4(*samplerFunc)(glm::vec3);
+
 
 struct OctalNode
 {

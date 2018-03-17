@@ -24,10 +24,20 @@ in vec3 Ray;
 in vec3 InvRay;
 
 const vec3 TotalCubeBounds[2] = {vec3(-2.5f), vec3(2.5f)};
+vec4 Accumulatie = vec4(0.0f);
+
+vec4 AccumuleerKleur(vec4 Kleur, float Afstand)
+{
+	float maxAlpha = min(1.0f - Accumulatie.a, Kleur.a);
+	Accumulatie += vec4(Kleur.rgb * maxAlpha, maxAlpha);
+	return Accumulatie;
+}
 
 // http://chiranjivi.tripod.com/octrav.html
 vec4 GetCubeIntersectColor()
 {
+
+
 	const vec4 FaalKleur	= vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
 	const vec3 InvRay		= vec3(1.0f) / Ray;
 	const ivec3 Sign		= ivec3(int(Ray.x < 0), int(Ray.y < 0), int(Ray.z < 0));
@@ -52,7 +62,7 @@ vec4 GetCubeIntersectColor()
 		minmax = min(min(tmax.x, tmax.y), tmax.z);
 
 		if(maxmin >= minmax || minmax < 0 || maxmin < 0)
-			return FaalKleur * descends;
+			return AccumuleerKleur(FaalKleur, 1) * descends;
 
 		tmid = (tmin + tmax) * 0.5f;
 
@@ -79,8 +89,8 @@ vec4 GetCubeIntersectColor()
 		{
 			vec4 GevondenNodeKleur =  Nodes.data[PreviousNodeIndex].Kleur;
 
-			if(GevondenNodeKleur.a > 0.5f)
-				return GevondenNodeKleur * descends;
+			if(AccumuleerKleur(GevondenNodeKleur, minmax - maxmin).a > 0.99f)
+				return Accumulatie * descends;
 			else
 			{
 				Diepte				= 0;
@@ -90,7 +100,7 @@ vec4 GetCubeIntersectColor()
 				tmin				= original_tmin;
 				tmax				= original_tmax;
 
-				//descends *= 0.9f;
+				//descends *= 0.95f;
 			}
 		}
     }
