@@ -106,7 +106,7 @@ vec4 GetCubeIntersectColor()
 				tmin				= original_tmin;
 				tmax				= original_tmax;
 
-				//descends *= 0.95f;
+				//descends *= 0.975f;
 			}
 		}
     }

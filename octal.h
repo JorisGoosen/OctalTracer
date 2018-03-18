@@ -10,7 +10,7 @@
 #include "commonfunctions.h"
 #include "Perlin.h"
 
-const uint32_t OCTAL_MAX = 1024 * 1024 * 16;
+const uint32_t OCTAL_MAX = 1024 * 1024 * 12;
 
 typedef glm::vec4(*samplerFunc)(glm::vec3);
 
