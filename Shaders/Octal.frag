@@ -28,7 +28,13 @@ vec4 Accumulatie = vec4(0.0f);
 
 vec4 AccumuleerKleur(vec4 Kleur, float Afstand)
 {
-	float maxAlpha = min(1.0f - Accumulatie.a, Kleur.a);
+	const float borderForAlpha = 0.9f;
+	const float remainderMult = 1.0f / (1.0f - borderForAlpha);
+
+	if(Kleur.a >  borderForAlpha)
+		Afstand = mix(Afstand, 1.0f, (Kleur.a - borderForAlpha) * remainderMult);
+
+	float maxAlpha = min(1.0f - Accumulatie.a, Kleur.a * Afstand);
 	Accumulatie += vec4(Kleur.rgb * maxAlpha, maxAlpha);
 	return Accumulatie;
 }

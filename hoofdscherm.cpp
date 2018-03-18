@@ -16,8 +16,8 @@ HoofdScherm::HoofdScherm(QWidget *parent) :
 
     theHoofdScherm = this;
     ui->setupUi(this);
-	//showMaximized();
-	showFullScreen();
+	showMaximized();
+	//showFullScreen();
 
 }
 

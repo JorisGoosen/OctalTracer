@@ -30,7 +30,12 @@ glm::vec4 perlinNoise(glm::vec3 coord)
 {
 	//if( > 0.5)
 		//return glm::vec4(, 1.0f);
-	return glm::vec4((coord * 0.5f) + 0.5f, sqrt(glm::clamp(Perlin::thePerlin()->GetIniqoQuilesNoise(coord * 0.1f), 0.0f, 1.0f)));
+	float noiseVal0 = Perlin::thePerlin()->GetIniqoQuilesNoise(coord * 0.025f);
+	float noiseVal1 = Perlin::thePerlin()->GetIniqoQuilesNoise(glm::vec3(0.5f, 2.1f, 5.321f) + (coord * 0.1f));
+	float noiseMax0 = glm::max(noiseVal0, noiseVal1);
+	if(noiseMax0 < 0.5f) noiseMax0 = 0.0f;
+
+	return glm::vec4((coord * 0.5f) + 0.5f, glm::clamp(noiseMax0, 0.0f, 1.0f));
 }
 
 
@@ -40,7 +45,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
     ShaderTree = new shaderstorage<ShaderOctalNode>(OCTAL_MAX, QTGL);
 
 	//FillOctal();
-	CreateOctalFromSamplerFunc(perlinNoise, 6); //Dont do 9+
+	CreateOctalFromSamplerFunc(perlinNoise, 7); //Dont do 9+ or sometimes 8+ (Perlin)
 
     ConvertOctalToShader();
 
