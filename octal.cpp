@@ -10,6 +10,11 @@ glm::vec4 simpleSampler(glm::vec3 coord)
 
 	float alpha  =  glm::clamp(-innerDist, 0.0f, 0.05f) * 20.0f;
 
+	if(alpha < 0.5f)
+		alpha = 0.0f;
+	else
+		alpha = 1.0f;
+
 	//if(outerDist > 0 || innerDist < 0)
 		return glm::vec4((coord * 0.5f) + 0.5f, alpha);
 }
@@ -75,7 +80,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
 
 	//FillOctal();
 	//CreateOctalFromSamplerFunc(perlinNoise, 7); //Dont do 9+ or sometimes 8+ (Perlin)
-	CreateOctalFromSamplerFunc(combine, 6);
+	CreateOctalFromSamplerFunc(combine, 7);
     ConvertOctalToShader();
 
     ShaderTree->SchrijfWeg();

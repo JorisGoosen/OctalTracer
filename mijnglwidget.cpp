@@ -82,7 +82,7 @@ void MijnGLWidget::paintGL()
     //MijnPerlin->BindBuffers();
     //m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
     MijnOctal->BindBuffer();
-	m_shader.setUniformValue("OCTAL_MAX", uint(OCTAL_MAX));
+	m_shader.setUniformValue("OCTAL_MAX", OCTAL_MAX);
 	m_shader.setUniformValue("MAXDIEPTE", MijnOctal->MaxDepth);
 
 

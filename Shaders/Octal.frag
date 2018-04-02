@@ -8,13 +8,13 @@ out vec4 fColor;
 //uniform vec3 RPos, GPos, BPos;
 //uniform vec3 RGBFragMultiplier;
 
-uniform uint MAXDIEPTE;
-uniform uint OCTAL_MAX;
+uniform int MAXDIEPTE;
+uniform int OCTAL_MAX;
 
 struct ShaderOctalNode
 {
-    vec4 Kleur;
-    uint Sub[8];
+	vec4 Kleur;
+	uint Sub[8];
 };
 
 layout(std430, binding = 0) buffer ShaderTree	{ ShaderOctalNode data[]; } Nodes;
@@ -58,12 +58,12 @@ vec4 GetCubeIntersectColor()
 	float minimumMaxMin = 0.0f, minmax, maxmin;
 	vec3 tmin = original_tmin, tmax = original_tmax, tmid;
 	const uvec3 AssenMult = uvec3(1, 2, 4);
-	uint SubIndex, KindIndex, NodeIndex = 0, PreviousNodeIndex = 0;
+	uint SubIndex, NodeIndex = 0, PreviousNodeIndex = 0; //KindIndex
 
 	float descends = 1.0f;
 
 	while(Diepte >= 0)
-    {
+	{
 		maxmin = max(minimumMaxMin, max(max(tmin.x, tmin.y), tmin.z));
 		minmax = min(min(tmax.x, tmax.y), tmax.z);
 
@@ -72,18 +72,17 @@ vec4 GetCubeIntersectColor()
 
 		tmid = (tmin + tmax) * 0.5f;
 
-		SubIndex = 0;
-		for(int as=0; as<3; as++)
-			SubIndex += AssenMult[as] * int(Sign[as] == int(tmid[as] > maxmin));
-
-		KindIndex	= Nodes.data[NodeIndex].Sub[SubIndex];
-
-		if(KindIndex != OCTAL_MAX)
+		if(NodeIndex != OCTAL_MAX)
 		{
+
 			Diepte++;
 
+			SubIndex = 0;
+			for(int as=0; as<3; as++)
+				SubIndex += AssenMult[as] * int(Sign[as] == int(tmid[as] > maxmin));
+
 			PreviousNodeIndex	= NodeIndex;
-			NodeIndex			= KindIndex;
+			NodeIndex			= Nodes.data[PreviousNodeIndex].Sub[SubIndex];
 
 			for(int i=0; i<3; i++)
 				if(tmid[i] > maxmin)
@@ -93,6 +92,7 @@ vec4 GetCubeIntersectColor()
 		}
 		else
 		{
+			//return vec4(0.0f, 0.0f, 1.0f, 1.0f);
 			vec4 GevondenNodeKleur =  Nodes.data[PreviousNodeIndex].Kleur;
 
 			if(AccumuleerKleur(GevondenNodeKleur, minmax - maxmin).a > 0.99f)
@@ -102,6 +102,7 @@ vec4 GetCubeIntersectColor()
 				Diepte				= 0;
 				NodeIndex			= 0;
 				PreviousNodeIndex	= 0;
+
 				minimumMaxMin		= minmax + 0.00000000000000000001f;//max(0.001f, (minmax - maxmin) * 0.001f);
 				tmin				= original_tmin;
 				tmax				= original_tmax;
@@ -109,7 +110,9 @@ vec4 GetCubeIntersectColor()
 				//descends *= 0.975f;
 			}
 		}
-    }
+	//	else if(PreviousNodeIndex == OCTAL_MAX)
+		//	return vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	}
 
 	return vec4(1.0f);
 }
@@ -117,6 +120,9 @@ vec4 GetCubeIntersectColor()
 
 void main(void)
 {
-	fColor = GetCubeIntersectColor();
+	if(OCTAL_MAX == 0)
+		fColor = vec4(1, 1, 0, 1);
+	else
+		fColor = GetCubeIntersectColor();
 
 }
