@@ -11,6 +11,7 @@
 #include "hoofdscherm.h"
 #include "Perlin.h"
 #include "octal.h"
+#include <QTime>
 
 const long double PI = 3.141592653589793238L;
 const float FPI = 3.141592653589793238f;
@@ -25,20 +26,24 @@ public:
     }
 
     void keyPressEvent( QKeyEvent* e );
+	inline QOpenGLShaderProgram & get_current_shader() { return use_shader_stack ? m_shader_stack : m_shader_stackless; }
+
+	float getMilliseconds();
 
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
 
+public slots:
+	void shaderButtonPressed();
 
 private:
     QMatrix4x4 m_projection, m_modelview;
 
-    bool prepareShaderProgram( const QString& vertexShaderPath,
-    const QString& fragmentShaderPath );
+	bool prepareShaderProgram(QOpenGLShaderProgram & shader, const QString& vertexShaderPath, const QString& fragmentShaderPath );
 
-    QOpenGLShaderProgram m_shader;
+	QOpenGLShaderProgram m_shader_stack, m_shader_stackless;
     QOpenGLBuffer m_vertexBuffer;
     QVector3D ZonPos;
     Perlin      *MijnPerlin = NULL;
@@ -50,6 +55,9 @@ private:
     QVector3D   Translatie;
     float       Rotate = 0.0f, RotateVert = 0.0f;
     Octal       *MijnOctal = NULL;
+	bool		use_shader_stack = false;
+	float		millisecondsFPS=0;
+	float		framesFPS=0;
 };
 
 #endif // MIJNGLWIDGET_H

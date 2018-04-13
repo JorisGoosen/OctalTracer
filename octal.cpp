@@ -80,7 +80,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
 
 	//FillOctal();
 	//CreateOctalFromSamplerFunc(perlinNoise, 7); //Dont do 9+ or sometimes 8+ (Perlin)
-	CreateOctalFromSamplerFunc(combine, 7);
+	CreateOctalFromSamplerFunc(simpleSampler, 6);
     ConvertOctalToShader();
 
     ShaderTree->SchrijfWeg();

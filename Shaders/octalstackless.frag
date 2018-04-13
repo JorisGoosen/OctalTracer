@@ -17,14 +17,6 @@ struct ShaderOctalNode
 	uint Sub[8];
 };
 
-struct StackNode
-{
-	vec3 tmin, tmax;
-	uint NodeIndex;
-};
-
-StackNode WackyStack[7];
-
 layout(std430, binding = 0) buffer ShaderTree	{ ShaderOctalNode data[]; } Nodes;
 
 in vec3 Origin;
@@ -70,16 +62,8 @@ vec4 GetCubeIntersectColor()
 
 	float descends = 1.0f;
 
-	WackyStack[0].tmin		= original_tmin;
-	WackyStack[0].tmax		= original_tmax;
-	WackyStack[0].NodeIndex	= 0;
-
 	while(Diepte >= 0)
 	{
-		tmin		= WackyStack[Diepte].tmin;
-		tmax		= WackyStack[Diepte].tmax;
-		NodeIndex	= WackyStack[Diepte].NodeIndex;
-
 		maxmin = max(minimumMaxMin, max(max(tmin.x, tmin.y), tmin.z));
 		minmax = min(min(tmax.x, tmax.y), tmax.z);
 
@@ -105,38 +89,23 @@ vec4 GetCubeIntersectColor()
 					tmax[i] = tmid[i];
 				else
 					tmin[i] = tmid[i];
-
-			WackyStack[Diepte].tmin			= tmin;
-			WackyStack[Diepte].tmax			= tmax;
-			WackyStack[Diepte].NodeIndex	= NodeIndex;
 		}
 		else
 		{
 			//return vec4(0.0f, 0.0f, 1.0f, 1.0f);
-			vec4 GevondenNodeKleur = Nodes.data[WackyStack[max(0, Diepte-1)].NodeIndex].Kleur;
+			vec4 GevondenNodeKleur =  Nodes.data[PreviousNodeIndex].Kleur;
 
 			if(AccumuleerKleur(GevondenNodeKleur, minmax - maxmin).a > 0.99f)
 				return Accumulatie * descends;
 			else
 			{
-				//Diepte				= 0;
-				//NodeIndex			= 0;
-				//PreviousNodeIndex	= 0;
+				Diepte				= 0;
+				NodeIndex			= 0;
+				PreviousNodeIndex	= 0;
 
 				minimumMaxMin		= minmax + 0.00000000000000000001f;//max(0.001f, (minmax - maxmin) * 0.001f);
-				//tmin				= original_tmin;
-				//tmax				= original_tmax;
-				do
-				{
-					Diepte--;
-
-					tmin = WackyStack[Diepte].tmin;
-					tmax = WackyStack[Diepte].tmax;
-					tmid = (tmin + tmax) * 0.5f;
-
-					minmax = min(min(tmid.x, tmid.y), tmid.z);
-				}
-				while(Diepte > 0 && minimumMaxMin > minmax);
+				tmin				= original_tmin;
+				tmax				= original_tmax;
 
 				//descends *= 0.975f;
 			}

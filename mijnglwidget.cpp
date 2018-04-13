@@ -1,13 +1,19 @@
 #include "mijnglwidget.h"
 
+float MijnGLWidget::getMilliseconds()
+{
+	return QTime::currentTime().msecsSinceStartOfDay();
+}
 
 void MijnGLWidget::initializeGL()
 {
+	millisecondsFPS = getMilliseconds();
     initializeOpenGLFunctions();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    if(!prepareShaderProgram( ":/Shaders/Octal.vert", ":/Shaders/Octal.frag" )) return;
+	if(!prepareShaderProgram(m_shader_stack,		":/Shaders/Octal.vert", ":/Shaders/Octal.frag" )) return;
+	if(!prepareShaderProgram(m_shader_stackless,	":/Shaders/Octal.vert", ":/Shaders/octalstackless.frag" )) return;
 
     float points[] = {
          1,  1, 1, 1,
@@ -27,16 +33,23 @@ void MijnGLWidget::initializeGL()
 
     // Bind the shader program so that we can associate variables from
     // our application to the shaders
-    if ( !m_shader.bind() )
-    {
-        qWarning() << "Could not bind shader program to context";
-        return;
-    }
+	for(
+		QOpenGLShaderProgram * m_shader = &m_shader_stackless;
+		m_shader != NULL;
+		m_shader = (m_shader == &m_shader_stackless ? &m_shader_stack : NULL)
+	) {
 
-    // Enable the "vertex" attribute to bind it to our currently bound
-    // vertex buffer.
-    m_shader.setAttributeBuffer( "vertex", GL_FLOAT, 0, 4 );
-    m_shader.enableAttributeArray( "vertex" );
+		if (!m_shader->bind() )
+		{
+			qWarning() << "Could not bind shader program to context";
+			return;
+		}
+
+		// Enable the "vertex" attribute to bind it to our currently bound
+		// vertex buffer.
+		m_shader->setAttributeBuffer( "vertex", GL_FLOAT, 0, 4 );
+		m_shader->enableAttributeArray( "vertex" );
+	}
 
     ZonPos = QVector3D(0.0f, 100.0f, 0.0f);
     m_projection.setToIdentity();
@@ -56,11 +69,35 @@ void MijnGLWidget::resizeGL(int w, int h)
     glViewport( 0, 0, w, qMax( h, 1 ) );
 }
 
+void MijnGLWidget::shaderButtonPressed()
+{
+	use_shader_stack = !use_shader_stack;
+	HoofdScherm::theHoofdScherm->setShaderInUse(use_shader_stack ? "STACK USED" : "STACKLESS USED");
+}
+
 void MijnGLWidget::paintGL()
 {
+	setFocus();
+	framesFPS++;
+	float curTime = getMilliseconds();
+	float diff = (curTime  - millisecondsFPS) / 1000;
+//	std::cout << "millisecondsFPS: " << millisecondsFPS << " curTime: "<< curTime << std::endl << std::flush;
+
+	if(diff > 2)
+	{
+		millisecondsFPS = curTime;
+
+		float FPS = framesFPS / diff;
+
+		HoofdScherm::theHoofdScherm->setFPS(FPS);
+		//std::cout << "FPS: " << FPS << std::endl << std::flush;
+		framesFPS = 0;
+	}
+
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     m_vertexBuffer.bind();
 
+	QOpenGLShaderProgram & m_shader = get_current_shader();
 
     m_modelview.setToIdentity();
     //m_modelview.translate(Translatie);
@@ -89,22 +126,23 @@ void MijnGLWidget::paintGL()
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 }
 
-bool MijnGLWidget::prepareShaderProgram( const QString& vertexShaderPath, const QString& fragmentShaderPath )
+bool MijnGLWidget::prepareShaderProgram(QOpenGLShaderProgram & m_shader, const QString& vertexShaderPath, const QString& fragmentShaderPath )
 {
+
     // First we load and compile the vertex shader…
-    bool result = m_shader.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath );
+	bool result = m_shader.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath );
     if ( !result )
         qWarning() << m_shader.log();
 
     // …now the fragment shader…
-    result = m_shader.addShaderFromSourceFile( QOpenGLShader::Fragment, fragmentShaderPath );
+	result = m_shader.addShaderFromSourceFile( QOpenGLShader::Fragment, fragmentShaderPath );
     if ( !result )
         qWarning() << m_shader.log();
 
     // …and finally we link them to resolve any references.
-    result = m_shader.link();
+	result = m_shader.link();
     if ( !result )
-        qWarning() << "Could not link shader program:" << m_shader.log();
+		qWarning() << "Could not link shader program:" << m_shader.log();
 
     return result;
 }

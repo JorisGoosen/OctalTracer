@@ -6,5 +6,6 @@
         <file>Shaders/RayCast.vert</file>
         <file>Shaders/Octal.frag</file>
         <file>Shaders/Octal.vert</file>
+        <file>Shaders/octalstackless.frag</file>
     </qresource>
 </RCC>

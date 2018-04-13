@@ -23,7 +23,7 @@ struct StackNode
 	uint NodeIndex;
 };
 
-StackNode WackyStack[7];
+StackNode WackyStack[10];
 
 layout(std430, binding = 0) buffer ShaderTree	{ ShaderOctalNode data[]; } Nodes;
 

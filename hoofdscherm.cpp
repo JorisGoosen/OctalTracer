@@ -19,6 +19,8 @@ HoofdScherm::HoofdScherm(QWidget *parent) :
 	showMaximized();
 	//showFullScreen();
 
+	connect(ui->pushShaderSwitch, &QPushButton::clicked, ui->glScherm, &MijnGLWidget::shaderButtonPressed);
+
 }
 
 HoofdScherm::~HoofdScherm()
@@ -29,4 +31,14 @@ HoofdScherm::~HoofdScherm()
 void HoofdScherm::keyPressEvent( QKeyEvent* e )
 {
     ui->glScherm->keyPressEvent(e);
+}
+
+void HoofdScherm::setFPS(double fps)
+{
+	ui->labelFPS->setText(QString::fromStdString(std::to_string(fps)));
+}
+
+void HoofdScherm::setShaderInUse(QString shaderName)
+{
+	ui->pushShaderSwitch->setText(shaderName);
 }

@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 #include "commonfunctions.h"
+#include <QLCDNumber>
+#include <iostream>
+#include "mijnglwidget.h"
 
 namespace Ui {
 class HoofdScherm;
@@ -19,6 +22,8 @@ public:
     static HoofdScherm * Instance () { return theHoofdScherm; }
     static HoofdScherm * theHoofdScherm;
 
+	void setFPS(double fps);
+	void setShaderInUse(QString shaderName);
 private:
     Ui::HoofdScherm *ui;
     void keyPressEvent( QKeyEvent* e );

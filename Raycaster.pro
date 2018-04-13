@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT		+= core gui opengl
+QT		+= core gui opengl quickwidgets qml
 #CONFIG	+= console
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -42,7 +42,8 @@ DISTFILES += \
     Shaders/neutraal.vert \
     Shaders/RayCast.vert \
     Shaders/Octal.frag \
-    Shaders/Octal.vert
+    Shaders/Octal.vert \
+    Shaders/octalstackless.frag
 
 RESOURCES += \
     shaders.qrc
