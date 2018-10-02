@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Shaders/neutraal.frag</file>
+        <file>Shaders/neutraal.vert</file>
+        <file>Shaders/RayCast.frag</file>
+        <file>Shaders/RayCast.vert</file>
+        <file>Shaders/Octal.frag</file>
+        <file>Shaders/Octal.vert</file>
+        <file>Shaders/octalstackless.frag</file>
+    </qresource>
+</RCC>
