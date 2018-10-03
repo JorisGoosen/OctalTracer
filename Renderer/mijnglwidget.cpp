@@ -59,7 +59,7 @@ void MijnGLWidget::initializeGL()
 	rand();
 
 	MijnPerlin = new Perlin(this);
-    MijnOctal = new Octal(this);
+	MijnOctal = new Octal(this, MijnPerlin);
 	//MijnOctal->printTree();
 
 	HoofdScherm::theHoofdScherm->setShaderInUse(use_shader_stack ? "STACK USED" : "STACKLESS USED");

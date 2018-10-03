@@ -19,5 +19,6 @@ HEADERS += \
     shaderstorage.h \
     commonfunctions.h \
     octal.h \
-    octalnode.h
+    octalnode.h \
+    samplerfunctions.h
 

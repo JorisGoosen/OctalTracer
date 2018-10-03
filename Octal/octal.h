@@ -16,11 +16,11 @@ const uint32_t OCTAL_MAX = 1024 * 1024 * 24;
 class Octal
 {
 public:
-    Octal(QOpenGLFunctions_4_5_Core *QTGL);
+	Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin);
 
     void BindBuffer(int BindOctalTree = 0) {	ShaderTree->BindBufferStorage(BindOctalTree);	}
     void FillOctal();
-	void CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad);
+	void CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad, const char * naam);
 
     void ConvertOctalToShader();
     uint32_t MaxDepth = 0;
@@ -35,6 +35,7 @@ private:
     std::map<OctalNode, uint32_t> OctalNodeToShaderIndex;
     shaderstorage<ShaderOctalNode> *ShaderTree;
     OctalNode * Root;
+	Perlin * perlin;
 };
 
 #endif // OCTAL_H

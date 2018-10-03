@@ -22,8 +22,24 @@ void OctalNode::ZetMij(glm::vec4 DezeKleur, OctalNode * JeOuder)
 
 void OctalNode::createChildForDepthWithSampler(samplerFunc sampler, int Diepte, glm::vec3 Coordinaat, float KubusRadius)
 {
+	static int count		= 0;
+	static int total		= std::pow(8, Diepte);
+	static int lastCheck	= -1;
+	static int divider		= total / 100;
+
 	if(Diepte == 0)
+	{
 		Kleur = (*sampler)(Coordinaat);
+
+		if(count++ - lastCheck > divider)
+		{
+			lastCheck = count - (count % divider);
+
+			double procent = (((double)count) / ((double)total)) * 100.0;
+			std::cout << "modelseed at " << procent << "%\n" << std::endl;
+
+		}
+	}
 	else
 		for(int x=0; x<2; x++)
 			for(int y=0; y<2; y++)
@@ -36,6 +52,9 @@ void OctalNode::createChildForDepthWithSampler(samplerFunc sampler, int Diepte, 
 					Sub[SubIndex] = new OctalNode(this);
 					Sub[SubIndex]->createChildForDepthWithSampler(sampler, Diepte - 1, curCoord, KubusRadius * 0.5f);
 				}
+
+	PruneEmptyChildren();
+	MergeFullChildren();
 }
 
 

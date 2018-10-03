@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <stack>
+#include "samplerfunctions.h"
 
 
 glm::vec4 simpleSampler(glm::vec3 coord)
@@ -73,14 +74,15 @@ glm::vec4 combine(glm::vec3 coord)
 }
 
 
-Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
+Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 {
     ShaderTree = new shaderstorage<ShaderOctalNode>(OCTAL_MAX, QTGL);
 
 	randOffset = randvec3(-1.0f, 1.0f);
 
 	//FillOctal();
-	CreateOctalFromSamplerFunc(combine, 8, true, false); //Dont do 9+ or sometimes 8+ (Perlin)
+	registerPerlinNoise(perlin);
+	CreateOctalFromSamplerFunc(berg, 9, false, true, "perlinSphereBright.oct"); //Dont do 9+ or sometimes 8+ (Perlin)
 	//CreateOctalFromSamplerFunc(simpleSampler, 6);
     ConvertOctalToShader();
 
@@ -167,7 +169,7 @@ void Octal::FillOctal()
 	Root->PruneEmptyChildren();
 }
 
-void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad)
+void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad, const char * naam)
 {
 	Root = NULL;
 
@@ -181,11 +183,11 @@ void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool sho
 		std::cout << "Root->createChildForDepthWithSampler(sampler="<<sampler<<", Depth="<<Depth<<");" << std::endl;
 		Root->createChildForDepthWithSampler(sampler, Depth);
 
-		std::cout << "Root->PruneEmptyChildren();" << std::endl;
-		Root->PruneEmptyChildren();
+	//	std::cout << "Root->PruneEmptyChildren();" << std::endl;
+	//	Root->PruneEmptyChildren();
 
-		std::cout << "Root->MergeFullChildren();" << std::endl;
-		Root->MergeFullChildren();
+	//	std::cout << "Root->MergeFullChildren();" << std::endl;
+	//	Root->MergeFullChildren();
 	}
 
 	if(shouldSave)
@@ -193,7 +195,7 @@ void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool sho
 		std::ofstream fileOut;
 
 		std::cout << "fileOut open!" << std::endl;
-		fileOut.open("testOctalWrite.oct", std::ios::out | std::ios::binary);
+		fileOut.open(naam, std::ios::out | std::ios::binary);
 		assert(fileOut.is_open());
 
 		std::cout << "fileOut insertion!" << std::endl;
@@ -211,7 +213,7 @@ void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool sho
 		std::ifstream fileIn;
 
 		std::cout << "fileIn open!" << std::endl;
-		fileIn.open("testOctalWrite.oct", std::ios::in | std::ios::binary);
+		fileIn.open(naam, std::ios::in | std::ios::binary);
 		assert(fileIn.is_open());
 
 		std::cout << "fileIn extraction!" << std::endl;
