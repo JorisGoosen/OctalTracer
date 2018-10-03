@@ -1,6 +1,8 @@
 #pragma once
 #include <QOpenGLFunctions_4_5_Core>
 #include "commonfunctions.h"
+#include <iostream>
+
 
 #define MAXRETRYDEPTHSCHRIJF 10
 

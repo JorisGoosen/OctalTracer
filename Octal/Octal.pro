@@ -11,11 +11,13 @@ DESTDIR = ..
 
 SOURCES += \
     Perlin.cpp \
-    octal.cpp
+    octal.cpp \
+    octalnode.cpp
 
 HEADERS += \
     Perlin.h \
     shaderstorage.h \
     commonfunctions.h \
-    octal.h
+    octal.h \
+    octalnode.h
 

@@ -1,6 +1,7 @@
 #include "octal.h"
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <stack>
 
 
@@ -79,7 +80,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL)
 	randOffset = randvec3(-1.0f, 1.0f);
 
 	//FillOctal();
-	CreateOctalFromSamplerFunc(combine, 7); //Dont do 9+ or sometimes 8+ (Perlin)
+	CreateOctalFromSamplerFunc(combine, 8, true, false); //Dont do 9+ or sometimes 8+ (Perlin)
 	//CreateOctalFromSamplerFunc(simpleSampler, 6);
     ConvertOctalToShader();
 
@@ -166,96 +167,59 @@ void Octal::FillOctal()
 	Root->PruneEmptyChildren();
 }
 
-void OctalNode::createChildForDepthWithSampler(samplerFunc sampler, int Diepte, glm::vec3 Coordinaat, float KubusRadius)
+void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad)
 {
-	if(Diepte == 0)
-		Kleur = (*sampler)(Coordinaat);
-	else
-		for(int x=0; x<2; x++)
-			for(int y=0; y<2; y++)
-				for(int z=0; z<2; z++)
-				{
-					glm::vec3 rel(x==0 ? -1.0f : 1.0f, y==0 ? -1.0f : 1.0f, z==0 ? -1.0f : 1.0f);
-					glm::vec3 curCoord(Coordinaat + (rel * KubusRadius * 0.5f));
+	Root = NULL;
 
-					uint SubIndex = x + (y * 2) + (z * 4);
-					Sub[SubIndex] = new OctalNode(this);
-					Sub[SubIndex]->createChildForDepthWithSampler(sampler, Diepte - 1, curCoord, KubusRadius * 0.5f);
-				}
-}
+	bool	shouldGenerate	= shouldGenerateAndSave,
+			shouldSave		= shouldGenerateAndSave;
 
-
-
-
-void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth)
-{
-	Root = new OctalNode();
-
-	Root->createChildForDepthWithSampler(sampler, Depth);
-
-	Root->PruneEmptyChildren();
-	Root->MergeFullChildren();
-}
-
-const float considerThisEmpty = 0.1;
-
-bool OctalNode::PruneEmptyChildren()
-{
-	bool allChildrenAreEmpty = true;
-	bool IHaveNoChildren = true;
-
-	for(int i=0; i<8; i++)
-		if(Sub[i] != NULL)
-		{
-			IHaveNoChildren = false;
-
-			if(!Sub[i]->PruneEmptyChildren())
-				allChildrenAreEmpty = false;
-			else
-			{
-				delete Sub[i];
-				Sub[i] = NULL;
-			}
-		}
-
-	if(IHaveNoChildren)
-		return Kleur.a < considerThisEmpty;
-
-	return allChildrenAreEmpty;
-}
-
-bool OctalNode::MergeFullChildren()
-{
-	bool allChildrenAreFull = true;
-	int iHaveThisManyChildren = 0;
-
-	glm::vec4 AvgCol(0.0f);
-
-	for(int i=0; i<8; i++)
-		if(Sub[i] != NULL)
-		{
-			iHaveThisManyChildren++;
-
-			if(!Sub[i]->MergeFullChildren())
-				allChildrenAreFull = false;
-
-			AvgCol += Sub[i]->Kleur;
-		}
-
-	if(iHaveThisManyChildren == 8 && allChildrenAreFull)
+	if(shouldGenerate)
 	{
-		Kleur = AvgCol / 8.0f;
+		Root = new OctalNode();
 
-		for(int i=0; i<8; i++)
-		{
-			delete Sub[i];
-			Sub[i] = NULL;
-		}
+		std::cout << "Root->createChildForDepthWithSampler(sampler="<<sampler<<", Depth="<<Depth<<");" << std::endl;
+		Root->createChildForDepthWithSampler(sampler, Depth);
 
-		return Kleur.a > 1.0f - considerThisEmpty; //Should always be true anyway
+		std::cout << "Root->PruneEmptyChildren();" << std::endl;
+		Root->PruneEmptyChildren();
+
+		std::cout << "Root->MergeFullChildren();" << std::endl;
+		Root->MergeFullChildren();
 	}
 
-	return iHaveThisManyChildren == 0 && Kleur.a > 1.0f - considerThisEmpty;
+	if(shouldSave)
+	{
+		std::ofstream fileOut;
+
+		std::cout << "fileOut open!" << std::endl;
+		fileOut.open("testOctalWrite.oct", std::ios::out | std::ios::binary);
+		assert(fileOut.is_open());
+
+		std::cout << "fileOut insertion!" << std::endl;
+		Root->insertIntoStream(fileOut);
+
+		std::cout << "fileOut close!" << std::endl;
+		fileOut.close();
+	}
+
+	if(shouldLoad)
+	{
+		if(shouldGenerate)
+			delete Root;
+
+		std::ifstream fileIn;
+
+		std::cout << "fileIn open!" << std::endl;
+		fileIn.open("testOctalWrite.oct", std::ios::in | std::ios::binary);
+		assert(fileIn.is_open());
+
+		std::cout << "fileIn extraction!" << std::endl;
+		Root = OctalNode::constructFromStream(fileIn);
+
+		std::cout << "fileIn close!" << std::endl;
+		fileIn.close();
+	}
 }
 
 void Octal::ConvertOctalToShader()
@@ -341,3 +305,6 @@ uint32_t Octal::ConvertOctalToShader(OctalNode* HuidigeNode, uint32_t& Counter, 
 
     return HuidigeIndex;
 }
+
+
+
