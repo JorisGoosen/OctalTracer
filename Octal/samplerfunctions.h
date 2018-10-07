@@ -22,7 +22,7 @@ std::vector<std::vector<float>> hoogteVeldMaker(int dim)
 {
 	std::vector<std::vector<float>> hoogteKaart;
 
-	float pieMaker = (1.0f / dim) * 3.1428f;
+	float pieMaker = (1.0f / dim) * 3.142f;
 
 	hoogteKaart.resize(dim);
 
@@ -44,7 +44,7 @@ std::vector<std::vector<float>> hoogteVeldMaker(int dim)
 					(perlin->GetIniqoQuilesNoise(glm::vec3(X, Y, z) * 0.05f) > 0.5f)
 					calcStapel += 0.25f/dim;
 
-			hoogteKaart[x][y] = calcStapel * 0.7f;
+			hoogteKaart[x][y] = calcStapel * 0.5f;
 		}
 	}
 
@@ -88,6 +88,16 @@ glm::vec4 berg(glm::vec3 c)
 
 }
 
+glm::vec4 perliner(glm::vec3 c)
+{
+	float alpha = perlin->GetIniqoQuilesNoise(0.5f * c * glm::vec3(0.4f, 0.4f, 0.2f));
+
+	float hoogte = powf(0.5f + (c.y * 0.5f), 3.0f);
+	alpha *= hoogte;
+	//return glm::vec4(randvec3(0.0f, 1.0f), alpha > 0.5f ? 0.8f : 0.0f);
+	return glm::vec4(glm::vec3(1.0f), alpha > 0.5f ? 0.5f : 0.0f);
+}
+
 glm::vec3 colorMod(glm::vec3 c)
 {
 	glm::vec3 colA(0.0f, 0.0f, 1.0f), colB(1.0f, 1.0f, 0.0f);
@@ -111,5 +121,103 @@ glm::vec4 bubbelbol(glm::vec3 c)
 	return glm::vec4(colorMod(c), rad > l ? 1.0f : 0.0f);
 
 }
+
+
+glm::vec4 simpleSampler(glm::vec3 coord)
+{
+	float innerDist = glm::length(coord) - 0.75f;
+
+	float alpha  =  glm::clamp(-innerDist, 0.0f, 0.05f) * 20.0f;
+
+	if(alpha < 0.5f)
+		alpha = 0.0f;
+	else
+		alpha = 1.0f;
+
+	//if(outerDist > 0 || innerDist < 0)
+		return glm::vec4((coord * 0.5f) + 0.5f, alpha);
+}
+
+glm::vec4 simpleSamplerInverted(glm::vec3 coord)
+{
+	if(glm::length(coord) > 1.1f)
+		return glm::vec4(randcolor(), 1.0f);
+	return glm::vec4(0.0f);
+}
+
+
+glm::vec4 doubleWhammy(glm::vec3 coord)
+{
+	float outerDist = glm::length(coord) - 1.15f;
+	float innerDist = glm::length(coord) - 0.75f;
+
+	float alpha  =  glm::clamp(outerDist > 0 ? outerDist : -innerDist, 0.0f, 0.05f) * 20.0f;
+
+	//if(outerDist > 0 || innerDist < 0)
+		return glm::vec4((coord * 0.5f) + 0.5f, alpha);
+	//return glm::vec4(0.0f);
+}
+
+glm::vec4 perlinNoise(glm::vec3 coord)
+{
+	//if( > 0.5)
+		//return glm::vec4(, 1.0f);
+	float noiseVal0 = 0.75 * Perlin::thePerlin()->GetIniqoQuilesNoise(coord * 0.025f);
+	float noiseVal1 = Perlin::thePerlin()->GetIniqoQuilesNoise(glm::vec3(0.5f, 2.1f, 5.321f) + (coord * 0.1f));
+	float noiseMax0 = glm::max(noiseVal0, noiseVal1);
+	if(noiseMax0 < 0.5f) noiseMax0 = 0.0f;
+
+	return glm::vec4((coord * 0.5f) + 0.5f, glm::clamp(noiseMax0, 0.0f, 1.0f));
+}
+
+
+
+glm::vec4 detailPerlinNoise(glm::vec3 coord)
+{
+	static glm::vec3 randOffset = randvec3(-1.0f, 1.0f);
+	float noiseVal0 = Perlin::thePerlin()->GetIniqoQuilesNoise(randOffset + (coord * 0.1f));
+
+
+	return glm::vec4((coord * 0.5f) + 0.5f, glm::clamp(glm::pow(noiseVal0, 2.0f), 0.0f, 1.0f));
+}
+
+glm::vec4 combine(glm::vec3 coord)
+{
+	glm ::vec4 a = simpleSampler(coord);
+	glm ::vec4 b = detailPerlinNoise(coord);
+
+	glm::vec3 rgb = glm::vec3(1.0f);
+	float alpha = glm::min(a.a, b.a);
+	return glm::vec4(glm::vec3(perlinNoise(coord.xyz).a, perlinNoise(coord.zxy).a, perlinNoise(coord.zyx).a) , alpha > 0.5f ? 1.0f : 0.0f);
+}
+
+float hoogte(float x, float y, glm::vec4 * kleur)
+{
+	float extraZ = cosf(x * pi) * cosf(y * pi);
+
+	x *= pi * 3;
+	y *= pi * 3;
+
+	float z = sinf(x) * cosf(y);
+
+	z *= 0.5f;
+
+	z += 0.5f * extraZ;
+
+	//x *= 9;
+	//y *= 9;
+
+	if(kleur != NULL)
+	{
+		(*kleur) = glm::vec4(0.5f + (0.5f * sinf(x)), 0.5f + (0.5f * cosf(y)), 0.5f + (0.5f * sinf(z * pi * 2)), 1.0f);
+		//float v = z;
+		//(*kleur) = glm::vec4(glm::vec3(v, (1.0f - abs(v)), 1.0f - v), 1.0f);
+		//(*kleur) = glm::vec4(randvec3(0.0f, 1.0f), 1.0f);
+	}
+
+	return z * 0.5f;
+}
+
+
 
 #endif // SAMPLERFUNCTIONS_H

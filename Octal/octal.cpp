@@ -6,94 +6,34 @@
 #include "samplerfunctions.h"
 
 
-glm::vec4 simpleSampler(glm::vec3 coord)
-{
-	float innerDist = glm::length(coord) - 0.75f;
-
-	float alpha  =  glm::clamp(-innerDist, 0.0f, 0.05f) * 20.0f;
-
-	if(alpha < 0.5f)
-		alpha = 0.0f;
-	else
-		alpha = 1.0f;
-
-	//if(outerDist > 0 || innerDist < 0)
-		return glm::vec4((coord * 0.5f) + 0.5f, alpha);
-}
-
-glm::vec4 simpleSamplerInverted(glm::vec3 coord)
-{
-	if(glm::length(coord) > 1.1f)
-		return glm::vec4(randcolor(), 1.0f);
-	return glm::vec4(0.0f);
-}
-
-
-glm::vec4 doubleWhammy(glm::vec3 coord)
-{
-	float outerDist = glm::length(coord) - 1.15f;
-	float innerDist = glm::length(coord) - 0.75f;
-
-	float alpha  =  glm::clamp(outerDist > 0 ? outerDist : -innerDist, 0.0f, 0.05f) * 20.0f;
-
-	//if(outerDist > 0 || innerDist < 0)
-		return glm::vec4((coord * 0.5f) + 0.5f, alpha);
-	//return glm::vec4(0.0f);
-}
-
-glm::vec4 perlinNoise(glm::vec3 coord)
-{
-	//if( > 0.5)
-		//return glm::vec4(, 1.0f);
-	float noiseVal0 = 0.75 * Perlin::thePerlin()->GetIniqoQuilesNoise(coord * 0.025f);
-	float noiseVal1 = Perlin::thePerlin()->GetIniqoQuilesNoise(glm::vec3(0.5f, 2.1f, 5.321f) + (coord * 0.1f));
-	float noiseMax0 = glm::max(noiseVal0, noiseVal1);
-	if(noiseMax0 < 0.5f) noiseMax0 = 0.0f;
-
-	return glm::vec4((coord * 0.5f) + 0.5f, glm::clamp(noiseMax0, 0.0f, 1.0f));
-}
-
-glm::vec3 randOffset;
-
-glm::vec4 detailPerlinNoise(glm::vec3 coord)
-{
-    float noiseVal0 = Perlin::thePerlin()->GetIniqoQuilesNoise(randOffset + (coord * 0.1f));
-
-
-    return glm::vec4((coord * 0.5f) + 0.5f, glm::clamp(glm::pow(noiseVal0, 2.0f), 0.0f, 1.0f));
-}
-
-glm::vec4 combine(glm::vec3 coord)
-{
-	glm ::vec4 a = simpleSampler(coord);
-	glm ::vec4 b = detailPerlinNoise(coord);
-
-	glm::vec3 rgb = glm::vec3(1.0f);
-	float alpha = glm::min(a.a, b.a);
-	return glm::vec4(glm::vec3(perlinNoise(coord.xyz).a, perlinNoise(coord.zxy).a, perlinNoise(coord.zyx).a) , alpha > 0.5f ? 1.0f : 0.0f);
-}
-
-
 Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 {
     ShaderTree = new shaderstorage<ShaderOctalNode>(OCTAL_MAX, QTGL);
 
-	randOffset = randvec3(-1.0f, 1.0f);
-
 	//FillOctal();
 	registerPerlinNoise(perlin);
-	CreateOctalFromSamplerFunc(berg, 9, false, true, "perlinSphereBright.oct"); //Dont do 9+ or sometimes 8+ (Perlin)
+	//_Root = CreateOctalFromSamplerFunc(perliner, 8, true, false, "perlinSneeuw.oct"); //Dont do 9+ or sometimes 8+ (Perlin)
+	//OctalNode * A = loadOctalTree("perlinSphereBright.oct");
+	//OctalNode * A = loadOctalTree("weirdflower9_color_yellow.oct");
+	//OctalNode * B = loadOctalTree("bergjes.oct");
+
+	//_Root = A->mergeNodeTree(B);
+	//_Root->mergeNodeTree(B);
+
+	_Root = OctalNode::createFromHeightSampler(hoogte, 12);
+
+	//_Root = A;
 	//CreateOctalFromSamplerFunc(simpleSampler, 6);
     ConvertOctalToShader();
 
     ShaderTree->SchrijfWeg();
 }
 
-void Octal::FillOctal()
+OctalNode * Octal::FillOctal()
 {
     int Counter(1);
 
-    Root = new OctalNode();
+	OctalNode * Root = new OctalNode();
     Root->Kleur = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 
     OctalNode * Current(Root);
@@ -167,11 +107,30 @@ void Octal::FillOctal()
     }
 
 	Root->PruneEmptyChildren();
+
+	return Root;
 }
 
-void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad, const char * naam)
+OctalNode * Octal::loadOctalTree(const char * naam)
 {
-	Root = NULL;
+	std::ifstream fileIn;
+
+	std::cout << naam << " open for reading!" << std::endl;
+	fileIn.open(naam, std::ios::in | std::ios::binary);
+	assert(fileIn.is_open());
+
+	std::cout << naam <<  " extraction!" << std::endl;
+	OctalNode * loaded = OctalNode::constructFromStream(fileIn);
+
+	std::cout << naam <<  " closed!" << std::endl;
+	fileIn.close();
+
+	return loaded;
+}
+
+OctalNode * Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad, const char * naam)
+{
+	OctalNode * Root = NULL;
 
 	bool	shouldGenerate	= shouldGenerateAndSave,
 			shouldSave		= shouldGenerateAndSave;
@@ -194,14 +153,14 @@ void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool sho
 	{
 		std::ofstream fileOut;
 
-		std::cout << "fileOut open!" << std::endl;
+		std::cout <<  naam <<  " open for writing!" << std::endl;
 		fileOut.open(naam, std::ios::out | std::ios::binary);
 		assert(fileOut.is_open());
 
-		std::cout << "fileOut insertion!" << std::endl;
+		std::cout <<  naam << " insertion!" << std::endl;
 		Root->insertIntoStream(fileOut);
 
-		std::cout << "fileOut close!" << std::endl;
+		std::cout <<  naam << " closed!" << std::endl;
 		fileOut.close();
 	}
 
@@ -210,25 +169,17 @@ void  Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool sho
 		if(shouldGenerate)
 			delete Root;
 
-		std::ifstream fileIn;
-
-		std::cout << "fileIn open!" << std::endl;
-		fileIn.open(naam, std::ios::in | std::ios::binary);
-		assert(fileIn.is_open());
-
-		std::cout << "fileIn extraction!" << std::endl;
-		Root = OctalNode::constructFromStream(fileIn);
-
-		std::cout << "fileIn close!" << std::endl;
-		fileIn.close();
+		return loadOctalTree(naam);
 	}
+
+	return Root;
 }
 
 void Octal::ConvertOctalToShader()
 {
     uint32_t RunningCounter = 0;
     OctalNodeToShaderIndex.clear();
-    ConvertOctalToShader(Root, RunningCounter, OCTAL_MAX, OCTAL_MAX, 0);
+	ConvertOctalToShader(_Root, RunningCounter, OCTAL_MAX, OCTAL_MAX, 0);
 
     qDebug("Gevonden MaxDepth = %u\n", MaxDepth);
 }
@@ -237,7 +188,7 @@ void Octal::printTree()
 {
 	uint NaamDiepte = 0;
     std::map<OctalNode*, std::string> NodeToNaam;
-	std::string Resultaat = printTree(Root, NodeToNaam, NaamDiepte);
+	std::string Resultaat = printTree(_Root, NodeToNaam, NaamDiepte);
 	std::cout << Resultaat << std::flush;
 
 	//printf("%s\n", Resultaat.c_str());

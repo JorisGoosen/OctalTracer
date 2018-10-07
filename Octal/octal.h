@@ -11,7 +11,7 @@
 #include "Perlin.h"
 #include "octalnode.h"
 
-const uint32_t OCTAL_MAX = 1024 * 1024 * 24;
+const uint32_t OCTAL_MAX = 1024 * 1024 * 64;
 
 class Octal
 {
@@ -19,8 +19,9 @@ public:
 	Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin);
 
     void BindBuffer(int BindOctalTree = 0) {	ShaderTree->BindBufferStorage(BindOctalTree);	}
-    void FillOctal();
-	void CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad, const char * naam);
+	OctalNode * FillOctal();
+	OctalNode * CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad, const char * naam);
+	OctalNode * loadOctalTree(const char * naam);
 
     void ConvertOctalToShader();
     uint32_t MaxDepth = 0;
@@ -34,7 +35,7 @@ private:
 
     std::map<OctalNode, uint32_t> OctalNodeToShaderIndex;
     shaderstorage<ShaderOctalNode> *ShaderTree;
-    OctalNode * Root;
+	OctalNode * _Root;
 	Perlin * perlin;
 };
 

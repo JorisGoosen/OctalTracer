@@ -9,6 +9,7 @@
 //#include "Perlin.h"
 
 typedef glm::vec4(*samplerFunc)(glm::vec3);
+typedef float(*heightSamplerFunc)(float, float, glm::vec4 * kleur);
 
 
 struct OctalNode
@@ -49,6 +50,7 @@ struct OctalNode
 
 	static OctalNode * constructFromStream(std::ifstream& fileIn, std::map<uint64_t, std::pair<OctalNode*,size_t> >& lookingForLove);
 	static OctalNode * constructFromStream(std::ifstream& fileIn);
+	static OctalNode * createFromHeightSampler(heightSamplerFunc heightFunc, int diepte);
 
 	glm::vec4 Kleur;
 	OctalNode * Sub[8];
@@ -61,6 +63,14 @@ struct OctalNode
 	bool MergeFullChildren();
 	uint64_t id;
 
+	bool		iAmFull();
+	bool		iAmEmpty();
+	bool		iHaveChildren();
+	bool		iAmTransparent()	{ return !iAmOpaque();; }
+	bool		iAmOpaque()			{ return Kleur.a >= 0.75f; }
+	OctalNode * mergeNodeTree(OctalNode * & other);
+
+	void		insertNode(glm::vec4 Kleur, glm::vec3 pos, int diepte, glm::vec3 Coordinaat = glm::vec3(0.0f), float KubusRad = 1.0f);
 
 
 };

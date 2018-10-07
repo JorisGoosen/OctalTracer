@@ -85,6 +85,8 @@ bool OctalNode::PruneEmptyChildren()
 
 bool OctalNode::MergeFullChildren()
 {
+	//return false;
+
 	bool allChildrenAreFull = true;
 	int iHaveThisManyChildren = 0;
 
@@ -210,4 +212,216 @@ void OctalNode::ZetSub(size_t num, OctalNode * deze)
 
 	Sub[num] = deze;
 	deze->Ouder = this;
+}
+
+bool OctalNode::iHaveChildren()
+{
+	for(OctalNode * Kind : Sub)
+		if(Kind != NULL)
+			return true;
+
+	return false;
+}
+
+bool OctalNode::iAmFull()
+{
+	return !iHaveChildren()	|| Kleur.a >= 0.5f;
+}
+
+bool OctalNode::iAmEmpty()
+{
+	return !iHaveChildren()	|| Kleur.a < 0.5f;
+}
+
+//#define PRINT_MERGE_INFO
+
+OctalNode * OctalNode::mergeNodeTree(OctalNode * & other)
+{
+	#ifdef PRINT_MERGE_INFO
+	std::cout << "mergeNodeTree" << std::endl;
+	#endif
+
+	if(other == NULL)
+	{
+		#ifdef PRINT_MERGE_INFO
+		std::cout << "other == null!" << std::endl;
+		#endif
+
+		return this;
+	}
+
+	if(!iHaveChildren())
+	{
+		#ifdef PRINT_MERGE_INFO
+		std::cout << "i have no children" << std::endl;
+		#endif
+
+		if(other->iHaveChildren())
+		{
+			#ifdef PRINT_MERGE_INFO
+			std::cout << "other has children" << std::endl;
+			#endif
+
+			if(iAmOpaque())
+			{
+				#ifdef PRINT_MERGE_INFO
+				std::cout << "i am opaque" << std::endl;
+				#endif
+
+				delete other;
+				other = NULL;
+				return this;
+			}
+			else
+			{
+				#ifdef PRINT_MERGE_INFO
+				std::cout << "i am transparent" << std::endl;
+				#endif
+
+				other->Ouder = Ouder;
+				delete this;
+				return other;
+			}
+		}
+		else
+		{
+			#ifdef PRINT_MERGE_INFO
+			std::cout << "other has no children, alpha winner takes all" << std::endl;
+			#endif
+
+			if(Kleur.a < other->Kleur.a)
+				Kleur = other->Kleur;
+
+			//Kleur = 0.5f * ( Kleur + other->Kleur );
+
+			delete other;
+			other = NULL;
+			return this;
+		}
+	}
+	else // I Have Children
+	{
+		#ifdef PRINT_MERGE_INFO
+		std::cout << "i have children" << std::endl;
+		#endif
+
+		if(!other->iHaveChildren())
+		{
+			#ifdef PRINT_MERGE_INFO
+			std::cout << "other has no children" << std::endl;
+			#endif
+
+			if(other->iAmOpaque())
+			{
+				#ifdef PRINT_MERGE_INFO
+				std::cout << "other is opaque so it replaces me" << std::endl;
+				#endif
+
+				other->Ouder = Ouder;
+				delete this;
+				return other;
+			}
+			else
+			{
+				#ifdef PRINT_MERGE_INFO
+				std::cout << "other is transparent so i delete it" << std::endl;
+				#endif
+
+				delete other;
+				other = NULL;
+				return this;
+			}
+		}
+		else // other has children
+		{
+			#ifdef PRINT_MERGE_INFO
+			std::cout << "other has children as well, lets merge em" << std::endl;
+			#endif
+
+			float mijnKinderen = 0, zijnKinderen = 0;
+
+			for(int sub=0; sub < 8; sub++)
+			{
+				if(Sub[sub] != NULL)
+					mijnKinderen++;
+
+				if(other->Sub[sub] != NULL)
+					zijnKinderen++;
+
+				if(Sub[sub] != NULL)
+					Sub[sub] = Sub[sub]->mergeNodeTree(other->Sub[sub]);
+				else if(other->Sub[sub] != NULL)
+				{
+					Sub[sub]		= other->Sub[sub];
+					Sub[sub]->Ouder = this;
+					other->Sub[sub] = NULL;
+				}
+			}
+
+			Kleur = ((Kleur * mijnKinderen) + (other->Kleur * zijnKinderen)) / (mijnKinderen + zijnKinderen);
+
+			delete other;
+			other = NULL;
+
+			return this;
+		}
+	}
+}
+
+void OctalNode::insertNode(glm::vec4 newKleur, glm::vec3 pos, int diepte, glm::vec3 Coordinaat, float KubusRad)
+{
+	if(diepte == 0)
+		Kleur = newKleur;
+	else
+	{
+		int xyz[3];
+		for(int i=0; i<3; i++)
+			xyz[i] = pos[i] < Coordinaat[i] ? 0 : 1;
+		int sub = xyz[0] + (2 * xyz[1]) + (4 * xyz[2]);
+
+		if(Sub[sub] == NULL)
+			Sub[sub] = new OctalNode(this);
+
+		glm::vec3 rel(	xyz[0] == 0 ? -1.0f : 1.0f,
+						xyz[1] == 0 ? -1.0f : 1.0f,
+						xyz[2] == 0 ? -1.0f : 1.0f);
+		glm::vec3 curCoord(Coordinaat + (rel * KubusRad * 0.5f));
+
+		Sub[sub]->insertNode(newKleur, pos, diepte - 1, curCoord, KubusRad * 0.5f);
+	}
+}
+
+OctalNode * OctalNode::createFromHeightSampler(heightSamplerFunc heightFunc, int diepte)
+{
+	OctalNode * Wortel = new OctalNode(NULL);
+
+	float dim = pow(2, diepte);
+
+	float	total = dim * dim,
+			lastStep = 0,
+			percent = total / 100.0f,
+			step = 0;
+
+	for(float x=0; x<dim; x++)
+		for(float y=0; y<dim; y++)
+		{
+			glm::vec4 kleur;
+			glm::vec3 pos;
+			pos.x = -1.0f + ((x / dim) * 2.0f);
+			pos.z = -1.0f + ((y / dim) * 2.0f);
+			pos.y = heightFunc(pos.x, pos.z, &kleur);
+			Wortel->insertNode(kleur, pos, diepte);
+
+			step++;
+
+			if(step > lastStep + percent)
+			{
+				lastStep = step;
+				std::cout << "Currently at " << step / total * 100.0f << "%" << std::endl;
+			}
+
+		}
+
+	return Wortel;
+
 }

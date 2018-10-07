@@ -22,4 +22,6 @@ inline glm::vec3 randvec3(float min, float max)         { return glm::vec3(randf
 
 inline void InitRandSeed() { srand(time_t(NULL)); }
 
+const float pi = 3.14159265359f;
+
 #endif // COMMONFUNCTIONS_H
