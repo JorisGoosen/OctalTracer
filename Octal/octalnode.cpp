@@ -391,36 +391,95 @@ void OctalNode::insertNode(glm::vec4 newKleur, glm::vec3 pos, int diepte, glm::v
 	}
 }
 
-OctalNode * OctalNode::createFromHeightSampler(heightSamplerFunc heightFunc, int diepte)
+OctalNode * OctalNode::createFromHeightSampler(heightSamplerFunc heightFunc, colorSamplerFunc colorFunc, int diepte)
 {
 	OctalNode * Wortel = new OctalNode(NULL);
 
 	float dim = pow(2, diepte);
 
-	float	total = dim * dim,
+	float	total = dim * dim * 2,
 			lastStep = 0,
-			percent = total / 100.0f,
+			percent = total / 40.0f,
 			step = 0;
 
+	std::vector<std::vector<float>> hoogtes;
+	std::cout << "hoogtes begin!" << std::endl;
+
+	hoogtes.resize(static_cast<size_t>(dim));
 	for(float x=0; x<dim; x++)
+	{
+		hoogtes[x].resize(static_cast<size_t>(dim));
 		for(float y=0; y<dim; y++)
 		{
-			glm::vec4 kleur;
+
 			glm::vec3 pos;
 			pos.x = -1.0f + ((x / dim) * 2.0f);
 			pos.z = -1.0f + ((y / dim) * 2.0f);
-			pos.y = heightFunc(pos.x, pos.z, &kleur);
-			Wortel->insertNode(kleur, pos, diepte);
+
+			hoogtes[static_cast<size_t>(x)][static_cast<size_t>(y)] = heightFunc(pos.x, pos.z);
+
 
 			step++;
 
 			if(step > lastStep + percent)
 			{
 				lastStep = step;
-				std::cout << "Currently at " << step / total * 100.0f << "%" << std::endl;
+				std::cout << "Currently at " << step / total * 100.0f << "% (generating heightField)" << std::endl;
 			}
 
 		}
+	}
+
+	std::cout << "OctalNode begin!" << std::endl;
+	int DIM = static_cast<int>(dim);
+
+	for(int x=0; x<dim; x++)
+		for(int y=0; y<dim; y++)
+		{
+			float lokaleHoogtes[3][3];
+
+			for(int xi=0; xi < 3; xi++)
+				for(int yi=0; yi < 3; yi++)
+					lokaleHoogtes[xi][yi] = hoogtes[ static_cast<size_t>(std::min(DIM - 1, std::max(0, x + xi - 1))) ][ static_cast<size_t>(std::min(DIM - 1, std::max(0, y + yi - 1))) ];
+
+			float	minHoogte  = 1e20f,
+					mijnHoogte = lokaleHoogtes[1][1];
+
+			for(int xi = 0; xi < 3; xi++)
+				for(int yi = 0; yi < 3; yi++)
+					minHoogte = std::min(minHoogte, lokaleHoogtes[xi][yi]);
+
+			glm::vec3 pos;
+			pos.x = -1.0f + ((x / dim) * 2.0f);
+			pos.z = -1.0f + ((y / dim) * 2.0f);
+			const float stepHoogte = 2.0f / dim;
+
+		//	if(int(step) % 100 == 0)
+			//	std::cout << "minHoogte = " << minHoogte << " mijnHoogte = " << mijnHoogte << " en stepHoogte = " << stepHoogte  << std::endl;
+
+			//minHoogte	-= fmod(minHoogte, stepHoogte);
+			//mijnHoogte	-= fmod(minHoogte, stepHoogte);
+			minHoogte	-= stepHoogte * 2;
+			mijnHoogte	+= stepHoogte * 2;
+
+
+			for(float hoogte = -1.0f; hoogte <= 1.0f; hoogte += stepHoogte)
+				if(hoogte > minHoogte && hoogte < mijnHoogte)
+				{
+					pos.y = hoogte;
+					Wortel->insertNode(glm::vec4(colorFunc(pos), 0.5f), pos, diepte);
+				}
+
+			step++;
+
+			if(step > lastStep + percent)
+			{
+				lastStep = step;
+				std::cout << "Currently at " << step / total * 100.0f << "% ( loading surface into octal )" << std::endl;
+			}
+
+		}
+
 
 	return Wortel;
 

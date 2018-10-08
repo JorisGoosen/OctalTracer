@@ -191,7 +191,14 @@ glm::vec4 combine(glm::vec3 coord)
 	return glm::vec4(glm::vec3(perlinNoise(coord.xyz).a, perlinNoise(coord.zxy).a, perlinNoise(coord.zyx).a) , alpha > 0.5f ? 1.0f : 0.0f);
 }
 
-float hoogte(float x, float y, glm::vec4 * kleur)
+glm::vec3 kleurSampler_0(glm::vec3 c)
+{
+	c *= pi * 3;
+
+	return glm::vec3(unicos(c.x), unicos(c.y), unisin(c.z * 2));
+}
+
+float hoogte(float x, float y)
 {
 	float extraZ = cosf(x * pi) * cosf(y * pi);
 
@@ -201,19 +208,7 @@ float hoogte(float x, float y, glm::vec4 * kleur)
 	float z = sinf(x) * cosf(y);
 
 	z *= 0.5f;
-
 	z += 0.5f * extraZ;
-
-	//x *= 9;
-	//y *= 9;
-
-	if(kleur != NULL)
-	{
-		(*kleur) = glm::vec4(0.5f + (0.5f * sinf(x)), 0.5f + (0.5f * cosf(y)), 0.5f + (0.5f * sinf(z * pi * 2)), 1.0f);
-		//float v = z;
-		//(*kleur) = glm::vec4(glm::vec3(v, (1.0f - abs(v)), 1.0f - v), 1.0f);
-		//(*kleur) = glm::vec4(randvec3(0.0f, 1.0f), 1.0f);
-	}
 
 	return z * 0.5f;
 }

@@ -22,6 +22,10 @@ inline glm::vec3 randvec3(float min, float max)         { return glm::vec3(randf
 
 inline void InitRandSeed() { srand(time_t(NULL)); }
 
+inline float unisin(float ang) { return 0.5f + ( 0.5f * sinf(ang) ); }
+inline float unicos(float ang) { return 0.5f + ( 0.5f * cosf(ang) ); }
+
+
 const float pi = 3.14159265359f;
 
 #endif // COMMONFUNCTIONS_H

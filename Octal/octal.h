@@ -11,7 +11,7 @@
 #include "Perlin.h"
 #include "octalnode.h"
 
-const uint32_t OCTAL_MAX = 1024 * 1024 * 64;
+const uint32_t OCTAL_MAX = 1024 * 1024 * 32;
 
 class Octal
 {

@@ -44,7 +44,7 @@ vec4 GetCubeIntersectColor()
 {
 
 
-	const vec4 FaalKleur	= vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
+  const vec4 FaalKleur	= vec4(0.0f); //vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
 	const vec3 InvRay		= vec3(1.0f) / Ray;
 	const ivec3 Sign		= ivec3(int(Ray.x < 0), int(Ray.y < 0), int(Ray.z < 0));
 

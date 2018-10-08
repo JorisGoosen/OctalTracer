@@ -12,7 +12,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 
 	//FillOctal();
 	registerPerlinNoise(perlin);
-	//_Root = CreateOctalFromSamplerFunc(perliner, 8, true, false, "perlinSneeuw.oct"); //Dont do 9+ or sometimes 8+ (Perlin)
+	//_Root = CreateOctalFromSamplerFunc(perliner, 6, true, false, "perlinWolkjes6.oct"); //Dont do 9+ or sometimes 8+ (Perlin)
 	//OctalNode * A = loadOctalTree("perlinSphereBright.oct");
 	//OctalNode * A = loadOctalTree("weirdflower9_color_yellow.oct");
 	//OctalNode * B = loadOctalTree("bergjes.oct");
@@ -20,7 +20,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 	//_Root = A->mergeNodeTree(B);
 	//_Root->mergeNodeTree(B);
 
-	_Root = OctalNode::createFromHeightSampler(hoogte, 12);
+	_Root = OctalNode::createFromHeightSampler(hoogte, kleurSampler_0, 8);
 
 	//_Root = A;
 	//CreateOctalFromSamplerFunc(simpleSampler, 6);
