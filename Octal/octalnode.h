@@ -6,6 +6,7 @@
 #include <map>
 #include "commonfunctions.h"
 #include <fstream>
+#include <QImage>
 //#include "Perlin.h"
 
 typedef glm::vec4(*samplerFunc)(glm::vec3);
@@ -52,6 +53,10 @@ struct OctalNode
 	static OctalNode * constructFromStream(std::ifstream& fileIn, std::map<uint64_t, std::pair<OctalNode*,size_t> >& lookingForLove);
 	static OctalNode * constructFromStream(std::ifstream& fileIn);
 	static OctalNode * createFromHeightSampler(heightSamplerFunc heightFunc, colorSamplerFunc colorFunc, int diepte);
+	static OctalNode * createFromHeightMap(QImage heightMap, colorSamplerFunc colorFunc);
+	static OctalNode * createFromHeightVec(const std::vector<std::vector<float>> & map, colorSamplerFunc colorFunc, int diepte);
+
+
 
 	glm::vec4 Kleur;
 	OctalNode * Sub[8];

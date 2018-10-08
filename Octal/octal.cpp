@@ -20,7 +20,10 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 	//_Root = A->mergeNodeTree(B);
 	//_Root->mergeNodeTree(B);
 
-	_Root = OctalNode::createFromHeightSampler(hoogte, kleurSampler_0, 8);
+	//_Root = OctalNode::createFromHeightSampler(hoogte, kleurPerlin_0, 10);//kleurPerlin_0, 10);
+	_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_00.png"), kleurGrijsPerlin_0);
+
+	//saveAs(_Root, "RainbowLand.oct");
 
 	//_Root = A;
 	//CreateOctalFromSamplerFunc(simpleSampler, 6);
@@ -128,6 +131,21 @@ OctalNode * Octal::loadOctalTree(const char * naam)
 	return loaded;
 }
 
+void Octal::saveAs(OctalNode * tree, std::string name)
+{
+	std::ofstream fileOut;
+
+	std::cout <<  name <<  " open for writing!" << std::endl;
+	fileOut.open(name, std::ios::out | std::ios::binary);
+	assert(fileOut.is_open());
+
+	std::cout <<  name << " insertion!" << std::endl;
+	tree->insertIntoStream(fileOut);
+
+	std::cout <<  name << " closed!" << std::endl;
+	fileOut.close();
+}
+
 OctalNode * Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bool shouldGenerateAndSave, bool shouldLoad, const char * naam)
 {
 	OctalNode * Root = NULL;
@@ -150,19 +168,7 @@ OctalNode * Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bo
 	}
 
 	if(shouldSave)
-	{
-		std::ofstream fileOut;
-
-		std::cout <<  naam <<  " open for writing!" << std::endl;
-		fileOut.open(naam, std::ios::out | std::ios::binary);
-		assert(fileOut.is_open());
-
-		std::cout <<  naam << " insertion!" << std::endl;
-		Root->insertIntoStream(fileOut);
-
-		std::cout <<  naam << " closed!" << std::endl;
-		fileOut.close();
-	}
+		saveAs(Root, naam);
 
 	if(shouldLoad)
 	{

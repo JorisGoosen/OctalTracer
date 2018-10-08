@@ -11,7 +11,7 @@
 #include "Perlin.h"
 #include "octalnode.h"
 
-const uint32_t OCTAL_MAX = 1024 * 1024 * 32;
+const uint32_t OCTAL_MAX = 1024 * 1024 * 48;
 
 class Octal
 {
@@ -27,6 +27,7 @@ public:
     uint32_t MaxDepth = 0;
 
     void printTree();
+	static void saveAs(OctalNode * tree, std::string name);
 
 private:
 	std::string printTree(OctalNode * HuidigeNode, std::map<OctalNode*, std::string> & NodeToNaam, uint & NaamDiepte, std::string InSpring = "");

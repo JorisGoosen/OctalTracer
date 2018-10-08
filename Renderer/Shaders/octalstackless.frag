@@ -39,12 +39,27 @@ vec4 AccumuleerKleur(vec4 Kleur, float Afstand)
 	return Accumulatie;
 }
 
+vec3 achtergrondKleur(vec3 Ray)
+{
+  const float wittigBegin = 0.8f,   wittigLengte = 1.0f - wittigBegin,
+              blauwBegin  = 0.2,    blauwLengte = 1.0f - blauwBegin,
+              hoogte      = 0.5f + (Ray.y * 0.5f);
+  const vec3  wittig      = vec3(1.0f, 1.0f, 1.0f),
+              blauw       = vec3(0.0f, 0.0f, 1.0f),
+              zwart       = vec3(0.0f);
+
+ // if( hoogte > wittigBegin )
+ //      return mix(blauw, wittig, (hoogte - wittigBegin) / wittigLengte );
+  //else
+       return mix(zwart, blauw,  hoogte);
+}
+
 // http://chiranjivi.tripod.com/octrav.html
 vec4 GetCubeIntersectColor()
 {
 
 
-  const vec4 FaalKleur	= vec4(0.0f); //vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
+  const vec4 FaalKleur	= vec4(achtergrondKleur(Ray), 1.0f); //vec4(0.0f); //vec4(Ray * 0.5f + vec3(0.5f), 1.0f);
 	const vec3 InvRay		= vec3(1.0f) / Ray;
 	const ivec3 Sign		= ivec3(int(Ray.x < 0), int(Ray.y < 0), int(Ray.z < 0));
 

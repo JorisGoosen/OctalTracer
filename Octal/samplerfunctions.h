@@ -193,9 +193,52 @@ glm::vec4 combine(glm::vec3 coord)
 
 glm::vec3 kleurSampler_0(glm::vec3 c)
 {
-	c *= pi * 3;
 
-	return glm::vec3(unicos(c.x), unicos(c.y), unisin(c.z * 2));
+	c *= pi * 2;// * 3;
+
+	return glm::vec3( unicos(c.x), unicos(c.y), unisin(c.z));
+}
+
+glm::vec3 kleurPerlin_0(glm::vec3 c)
+{
+	static const glm::vec3		randOffset0 = randvec3(0.0f, 1.0f),
+								randOffset1 = randvec3(0.0f, 1.0f),
+								randOffset2 = randvec3(0.0f, 1.0f),
+								mult( 0.02f, 1.0f, 3.0f );
+	//c *= mult;
+
+	glm::vec3	c0 = randOffset0 + ( c * mult.x ),
+				c1 = randOffset1 + ( c * mult.y ),
+				c2 = randOffset2 + ( c * mult.z );
+
+	glm::vec3 col = glm::vec3(
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c0),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c1),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c2));
+
+	return glm::vec3(std::max(col.r - (col.g + col.b), 0.0f), std::max(col.g - col.b, 0.0f), col.b);
+}
+
+glm::vec3 kleurGrijsPerlin_0(glm::vec3 c)
+{
+	static const glm::vec3		randOffset0 = randvec3(0.0f, 1.0f),
+								randOffset1 = randvec3(0.0f, 1.0f),
+								randOffset2 = randvec3(0.0f, 1.0f),
+								mult( 4.0f, 3.00f, 2.0f );
+	//c *= mult;
+
+	glm::vec3	c0 = randOffset0 + ( c * mult.x ),
+				c1 = randOffset1 + ( c * mult.y ),
+				c2 = randOffset2 + ( c * mult.z );
+
+	glm::vec3 col = glm::vec3(
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c0),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c1),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c2));
+
+	float gray = std::max(col.x, std::max(col.y, col.z));
+
+	return glm::vec3(0.35f + (0.1f * gray));
 }
 
 float hoogte(float x, float y)
