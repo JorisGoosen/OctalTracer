@@ -25,6 +25,8 @@ inline void InitRandSeed() { srand(time_t(NULL)); }
 inline float unisin(float ang) { return 0.5f + ( 0.5f * sinf(ang) ); }
 inline float unicos(float ang) { return 0.5f + ( 0.5f * cosf(ang) ); }
 
+inline glm::vec3 mixCol(glm::vec3 a, glm::vec3 b, float r) { r = std::min(1.0f, std::max(0.0f, r)); return ( a * (1.0f - r) ) + ( b * r ); }
+
 
 const float pi = 3.14159265359f;
 

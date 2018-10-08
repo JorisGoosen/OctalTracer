@@ -134,17 +134,17 @@ bool MijnGLWidget::prepareShaderProgram(QOpenGLShaderProgram & m_shader, const Q
     // First we load and compile the vertex shader…
 	bool result = m_shader.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath );
     if ( !result )
-        qWarning() << m_shader.log();
+		std::cout << m_shader.log().toStdString() << std::endl;;
 
     // …now the fragment shader…
 	result = m_shader.addShaderFromSourceFile( QOpenGLShader::Fragment, fragmentShaderPath );
     if ( !result )
-        qWarning() << m_shader.log();
+		std::cout << m_shader.log().toStdString() << std::endl;
 
     // …and finally we link them to resolve any references.
 	result = m_shader.link();
     if ( !result )
-		qWarning() << "Could not link shader program:" << m_shader.log();
+		std::cout << "Could not link shader program:" << m_shader.log().toStdString() << std::endl;
 
     return result;
 }

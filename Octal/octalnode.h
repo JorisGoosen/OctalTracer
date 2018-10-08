@@ -53,8 +53,8 @@ struct OctalNode
 	static OctalNode * constructFromStream(std::ifstream& fileIn, std::map<uint64_t, std::pair<OctalNode*,size_t> >& lookingForLove);
 	static OctalNode * constructFromStream(std::ifstream& fileIn);
 	static OctalNode * createFromHeightSampler(heightSamplerFunc heightFunc, colorSamplerFunc colorFunc, int diepte);
-	static OctalNode * createFromHeightMap(QImage heightMap, colorSamplerFunc colorFunc);
-	static OctalNode * createFromHeightVec(const std::vector<std::vector<float>> & map, colorSamplerFunc colorFunc, int diepte);
+	static OctalNode * createFromHeightMap(QImage heightMap, std::vector<colorSamplerFunc> colorFuncs);
+	static OctalNode * createFromHeightVec(const std::vector<std::vector<glm::vec4>> & map, std::vector<colorSamplerFunc> colorFuncs, int diepte);
 
 
 

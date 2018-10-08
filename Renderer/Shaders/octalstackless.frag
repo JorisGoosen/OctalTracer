@@ -41,17 +41,20 @@ vec4 AccumuleerKleur(vec4 Kleur, float Afstand)
 
 vec3 achtergrondKleur(vec3 Ray)
 {
-  const float wittigBegin = 0.8f,   wittigLengte = 1.0f - wittigBegin,
-              blauwBegin  = 0.2,    blauwLengte = 1.0f - blauwBegin,
-              hoogte      = 0.5f + (Ray.y * 0.5f);
+  const float pi = 3.142f;
+  const float wittigBegin = 0.9f,   wittigLengte = 1.0f - wittigBegin,
+              blauwBegin  = 0.2f,    blauwLengte = 1.0f - blauwBegin;
+
   const vec3  wittig      = vec3(1.0f, 1.0f, 1.0f),
               blauw       = vec3(0.0f, 0.0f, 1.0f),
               zwart       = vec3(0.0f);
 
- // if( hoogte > wittigBegin )
- //      return mix(blauw, wittig, (hoogte - wittigBegin) / wittigLengte );
-  //else
-       return mix(zwart, blauw,  hoogte);
+  float       hoogte      = 0.5f * (1.0f + Ray.y);//0.5f + (Ray.y * 0.5f);
+  if( hoogte > wittigBegin )
+       return mix(blauw, wittig, (hoogte - wittigBegin) / wittigLengte );
+  else if( hoogte > blauwBegin)
+    return mix(zwart, blauw,  (hoogte - blauwBegin) / blauwLengte);
+  return zwart;
 }
 
 // http://chiranjivi.tripod.com/octrav.html

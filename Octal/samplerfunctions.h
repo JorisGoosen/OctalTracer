@@ -219,6 +219,30 @@ glm::vec3 kleurPerlin_0(glm::vec3 c)
 	return glm::vec3(std::max(col.r - (col.g + col.b), 0.0f), std::max(col.g - col.b, 0.0f), col.b);
 }
 
+glm::vec3 kleurGrasPerlin_0(glm::vec3 c)
+{
+	static const glm::vec3		randOffset0 = randvec3(0.0f, 1.0f),
+								randOffset1 = randvec3(0.0f, 1.0f),
+								randOffset2 = randvec3(0.0f, 1.0f),
+								mult( 0.1f, 3.00f, 10.0f );
+	//c *= mult;
+
+	glm::vec3	c0 = randOffset0 + ( c * mult.x ),
+				c1 = randOffset1 + ( c * mult.y ),
+				c2 = randOffset2 + ( c * mult.z );
+
+	glm::vec3 col = glm::vec3(
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c0),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c1),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c2));
+
+	float gras		= 0.5f + (0.125f *std::max(col.y, col.z));
+	float vergeeld	= gras * col.x * 0.2f;
+	glm::vec3 groen	= glm::vec3(vergeeld, gras, 0.0f);
+
+	return groen;
+}
+
 glm::vec3 kleurGrijsPerlin_0(glm::vec3 c)
 {
 	static const glm::vec3		randOffset0 = randvec3(0.0f, 1.0f),
@@ -237,8 +261,36 @@ glm::vec3 kleurGrijsPerlin_0(glm::vec3 c)
 				Perlin::thePerlin()->GetIniqoQuilesNoise(c2));
 
 	float gray = std::max(col.x, std::max(col.y, col.z));
+	glm::vec3 rots = glm::vec3(0.35f + (0.1f * gray));
 
-	return glm::vec3(0.35f + (0.1f * gray));
+		return rots;
+}
+
+glm::vec3 kleurSneeuwPerlin_0(glm::vec3 c)
+{
+	static const glm::vec3		randOffset0 = randvec3(0.0f, 1.0f),
+								randOffset1 = randvec3(0.0f, 1.0f),
+								randOffset2 = randvec3(0.0f, 1.0f),
+								mult( 4.0f, 1.00f, 20.0f );
+	//c *= mult;
+
+	glm::vec3	c0 = randOffset0 + ( c * mult.x ),
+				c1 = randOffset1 + ( c * mult.y ),
+				c2 = randOffset2 + ( c * mult.z );
+
+	glm::vec3 col = glm::vec3(
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c0),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c1),
+				Perlin::thePerlin()->GetIniqoQuilesNoise(c2));
+
+	float gray = std::max(col.x, std::max(col.y, col.z));
+	return glm::vec3(0.85f + (0.2f * gray));
+
+}
+
+glm::vec3 kleurGrijsGradient(glm::vec3 c)
+{
+	return glm::vec3( c.y * 2.0f);
 }
 
 float hoogte(float x, float y)

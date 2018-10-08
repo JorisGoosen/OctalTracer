@@ -129,7 +129,7 @@ void OctalNode::insertIntoStream(std::ofstream& fileOut)
 
 	for(int i=0; i<4; i++)
 	{
-		unsigned char rgba = (unsigned char)(Kleur[i] * 255);
+		unsigned char rgba = static_cast<unsigned char>(std::min(std::max(255.0f, Kleur[i] * 255), 0.0f));
 		fileOut.write(reinterpret_cast<char*>(&rgba), sizeof rgba);
 	}
 
@@ -391,7 +391,7 @@ void OctalNode::insertNode(glm::vec4 newKleur, glm::vec3 pos, int diepte, glm::v
 	}
 }
 
-OctalNode * OctalNode::createFromHeightMap(QImage heightMap, colorSamplerFunc colorFunc)
+OctalNode * OctalNode::createFromHeightMap(QImage heightMap, std::vector<colorSamplerFunc> colorFuncs)
 {
 	if(heightMap.width() != heightMap.height())
 		throw std::runtime_error("grond must be square!");
@@ -410,8 +410,10 @@ OctalNode * OctalNode::createFromHeightMap(QImage heightMap, colorSamplerFunc co
 			percent = total / 20.0f,
 			step = 0;
 
-	std::vector<std::vector<float>> hoogtes;
+	std::vector<std::vector<glm::vec4>> hoogtes;
 	std::cout << "hoogtes begin!" << std::endl;
+
+	auto qColorToVec = [](QColor col) { return glm::vec4(col.redF(), col.greenF(), col.blueF(), col.alphaF()); };
 
 	hoogtes.resize(dim);
 	for(size_t x=0; x<dim; x++)
@@ -419,7 +421,7 @@ OctalNode * OctalNode::createFromHeightMap(QImage heightMap, colorSamplerFunc co
 		hoogtes[x].resize(dim);
 
 		for(size_t y=0; y<dim; y++)
-			hoogtes[x][y] = heightMap.pixelColor(x, y).redF();
+			hoogtes[x][y] = qColorToVec(heightMap.pixelColor(x, y));
 
 
 		step++;
@@ -427,12 +429,12 @@ OctalNode * OctalNode::createFromHeightMap(QImage heightMap, colorSamplerFunc co
 		if(step > lastStep + percent)
 		{
 			lastStep = step;
-			std::cout << "Currently at " << step / total * 100.0f << "% (converting grond-png)" << std::endl;
+			std::cout << "Currently at " << int(step / total * 100.0f) << "% (converting grond-png)" << std::endl;
 		}
 
 	}
 
-	return createFromHeightVec(hoogtes, colorFunc, diepte);
+	return createFromHeightVec(hoogtes, colorFuncs, diepte);
 }
 
 OctalNode * OctalNode::createFromHeightSampler(heightSamplerFunc heightFunc, colorSamplerFunc colorFunc, int diepte)
@@ -446,7 +448,7 @@ OctalNode * OctalNode::createFromHeightSampler(heightSamplerFunc heightFunc, col
 			percent = total / 20.0f,
 			step = 0;
 
-	std::vector<std::vector<float>> hoogtes;
+	std::vector<std::vector<glm::vec4>> hoogtes;
 	std::cout << "hoogtes begin!" << std::endl;
 
 	hoogtes.resize(static_cast<size_t>(dim));
@@ -460,7 +462,7 @@ OctalNode * OctalNode::createFromHeightSampler(heightSamplerFunc heightFunc, col
 			pos.x = -1.0f + ((x / dim) * 2.0f);
 			pos.z = -1.0f + ((y / dim) * 2.0f);
 
-			hoogtes[static_cast<size_t>(x)][static_cast<size_t>(y)] = heightFunc(pos.x, pos.z);
+			hoogtes[static_cast<size_t>(x)][static_cast<size_t>(y)] = glm::vec4(heightFunc(pos.x, pos.z), 0.0f, 0.0f, 1.0f);
 
 
 			step++;
@@ -468,16 +470,16 @@ OctalNode * OctalNode::createFromHeightSampler(heightSamplerFunc heightFunc, col
 			if(step > lastStep + percent)
 			{
 				lastStep = step;
-				std::cout << "Currently at " << step / total * 100.0f << "% (generating heightField)" << std::endl;
+				std::cout << "Currently at " << int(step / total * 100.0f) << "% (generating heightField)" << std::endl;
 			}
 
 		}
 	}
 
-	return createFromHeightVec(hoogtes, colorFunc, diepte);
+	return createFromHeightVec(hoogtes, {colorFunc}, diepte);
 }
 
-OctalNode * OctalNode::createFromHeightVec(const std::vector<std::vector<float>> & hoogtes, colorSamplerFunc colorFunc, int diepte)
+OctalNode * OctalNode::createFromHeightVec(const std::vector<std::vector<glm::vec4>> & hoogtes, std::vector<colorSamplerFunc> colorFuncs, int diepte)
 {
 	OctalNode * Wortel = new OctalNode(NULL);
 
@@ -498,7 +500,7 @@ OctalNode * OctalNode::createFromHeightVec(const std::vector<std::vector<float>>
 
 			for(int xi=0; xi < 3; xi++)
 				for(int yi=0; yi < 3; yi++)
-					lokaleHoogtes[xi][yi] = hoogtes[ static_cast<size_t>(std::min(DIM - 1, std::max(0, x + xi - 1))) ][ static_cast<size_t>(std::min(DIM - 1, std::max(0, y + yi - 1))) ];
+					lokaleHoogtes[xi][yi] = hoogtes[ static_cast<size_t>(std::min(DIM - 1, std::max(0, x + xi - 1))) ][ static_cast<size_t>(std::min(DIM - 1, std::max(0, y + yi - 1))) ].r;
 
 			float	minHoogte  = 1e20f,
 					mijnHoogte = lokaleHoogtes[1][1];
@@ -522,12 +524,26 @@ OctalNode * OctalNode::createFromHeightVec(const std::vector<std::vector<float>>
 			minHoogte	-= laagDikte;//stepHoogte * 2;
 			mijnHoogte	+= laagDikte;//stepHoogte * 2;
 
+			float gras = hoogtes[x][y].g;
+			float sneeuw = hoogtes[x][y].b;
 
 			for(float hoogte = -1.0f; hoogte <= 1.0f; hoogte += stepHoogte)
 				if(hoogte > minHoogte && hoogte < mijnHoogte)
 				{
 					pos.y = hoogte;
-					Wortel->insertNode(glm::vec4(colorFunc(pos), 1.0f), pos, diepte);
+
+
+					glm::vec3 col;
+
+					if( colorFuncs.size() == 1)
+						col = colorFuncs[0](pos);
+					else
+						col = mixCol(colorFuncs[0](pos), colorFuncs[1](pos), gras);
+
+					if(colorFuncs.size() > 2)
+						col = mixCol(col, colorFuncs[2](pos), sneeuw);
+
+					Wortel->insertNode(glm::vec4(col, 1.0f), pos, diepte);
 				}
 
 
@@ -536,7 +552,7 @@ OctalNode * OctalNode::createFromHeightVec(const std::vector<std::vector<float>>
 			if(step > lastStep + percent)
 			{
 				lastStep = step;
-				std::cout << "Currently at " << step / total * 100.0f << "% ( loading surface into octal )" << std::endl;
+				std::cout << "Currently at " << int(step / total * 100.0f) << "% ( loading surface into octal )" << std::endl;
 
 				Wortel->MergeFullChildren();
 			}
