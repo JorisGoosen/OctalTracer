@@ -12,7 +12,8 @@ DESTDIR = ..
 SOURCES += \
     Perlin.cpp \
     octal.cpp \
-    octalnode.cpp
+    octalnode.cpp \
+    cubeintersect.cpp
 
 HEADERS += \
     Perlin.h \
@@ -20,5 +21,6 @@ HEADERS += \
     commonfunctions.h \
     octal.h \
     octalnode.h \
-    samplerfunctions.h
+    samplerfunctions.h \
+    cubeintersect.h
 

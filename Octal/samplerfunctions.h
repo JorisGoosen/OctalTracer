@@ -290,7 +290,12 @@ glm::vec3 kleurSneeuwPerlin_0(glm::vec3 c)
 
 glm::vec3 kleurGrijsGradient(glm::vec3 c)
 {
-	return glm::vec3( c.y * 2.0f);
+	return glm::vec3( 0.5f + 0.5f * (-1.0f * c.y));
+}
+
+glm::vec3 kleurZwart(glm::vec3 c)
+{
+	return glm::vec3(0.0f);
 }
 
 float hoogte(float x, float y)

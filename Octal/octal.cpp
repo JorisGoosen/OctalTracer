@@ -4,7 +4,9 @@
 #include <fstream>
 #include <stack>
 #include "samplerfunctions.h"
-
+#include "cubeintersect.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
 
 Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 {
@@ -22,10 +24,51 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 
 	//_Root = OctalNode::createFromHeightSampler(hoogte, kleurPerlin_0, 10);//kleurPerlin_0, 10);
 
-	//_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_00.png"), { kleurGrijsPerlin_0, kleurGrasPerlin_0, kleurSneeuwPerlin_0 });// kleurGrijsGradient);
-	//saveAs(_Root, "grijzeBergSpiraal.oct");
+	//_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_01.png"), { kleurZwart, kleurZwart, kleurZwart });// kleurGrijsGradient);
+	//saveAs(_Root, "mordor.oct");
 	//delete _Root;
-	_Root = loadOctalTree("grijzeBergSpiraal.oct");
+	//_Root = loadOctalTree("ugly.oct");
+	_Root = loadOctalTree("mordor.oct");
+	//_Root = loadOctalTree("afgebrokkeldeFlats10.oct");
+
+	float		phi = 0.0f,
+				theta = 0.0f;
+
+	glm::mat4	ModelView = glm::mat4() *
+							glm::rotate(phi,   glm::vec3(0.0f, 0.0f, 1.0f)) *
+							glm::rotate(theta, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glm::vec3	Translatie			= glm::vec3(0, 6, 0),
+				Ray					= glm::vec3(0.0f, -1.0f, 0.0f),			//normalize(glm::mat3(ModelView) * glm::vec3(0, 0, 1.0)),
+				Origin				= Translatie,							//glm::mat3(ModelView) * Translatie,
+				TotalCubeBounds[2]	= {glm::vec3(-1.0f), glm::vec3(1.0f)};
+
+	int multi = 800000;
+	for(int i=0; i< multi * 100; i++)
+	{
+		do
+		{
+			Ray = randvec3(-1.0f, 1.0f);
+		}
+		while(glm::length(Ray) > 1 && Ray.z > 0.0f && Ray.y < 0.0f);
+
+		Ray		 = glm::normalize(Ray);
+		Origin	 = glm::vec3(0.0f, 2.0f, -7.0f);
+
+		//std::cout << "Ray " << Ray << "\tand Origin " << Origin << std::endl;
+
+		foton * found = GetCubeIntersectColor(_Root, Ray, TotalCubeBounds, Origin, glm::vec4(randvec3(0.75f, 1.0f), 1.0f));//glm::vec4(1.0f));//glm::vec4(glm::vec3(0.5f) + (0.5f * Ray), 1.0f));
+
+		//std::cout << (found != NULL ? "found a cube with intersect!" : "didn't find a cube with intersect..") << std::endl;
+
+		if(found != NULL)
+			delete found;
+		found = NULL;
+
+
+		if(i % (multi * 5) == 0)
+			std::cout << "light at " << (i / multi) << "%" << std::endl;
+	}
 
 	//_Root = A;
 	//CreateOctalFromSamplerFunc(simpleSampler, 6);
