@@ -129,7 +129,7 @@ void OctalNode::insertIntoStream(std::ofstream& fileOut)
 
 	for(int i=0; i<4; i++)
 	{
-		unsigned char rgba = static_cast<unsigned char>(std::min(std::max(255.0f, Kleur[i] * 255), 0.0f));
+		unsigned char rgba = static_cast<unsigned char>(std::max(std::min(255.0f, Kleur[i] * 255.0f), 0.0f));
 		fileOut.write(reinterpret_cast<char*>(&rgba), sizeof rgba);
 	}
 
@@ -524,8 +524,8 @@ OctalNode * OctalNode::createFromHeightVec(const std::vector<std::vector<glm::ve
 			minHoogte	-= laagDikte;//stepHoogte * 2;
 			mijnHoogte	+= laagDikte;//stepHoogte * 2;
 
-			float gras = hoogtes[x][y].g;
-			float sneeuw = hoogtes[x][y].b;
+			float gras		= hoogtes[x][y].g;
+			float sneeuw	= hoogtes[x][y].b;
 
 			for(float hoogte = -1.0f; hoogte <= 1.0f; hoogte += stepHoogte)
 				if(hoogte > minHoogte && hoogte < mijnHoogte)

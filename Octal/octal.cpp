@@ -21,11 +21,11 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 	//_Root->mergeNodeTree(B);
 
 	//_Root = OctalNode::createFromHeightSampler(hoogte, kleurPerlin_0, 10);//kleurPerlin_0, 10);
-	_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_01.png"), { kleurGrijsPerlin_0, kleurGrasPerlin_0, kleurSneeuwPerlin_0 });// kleurGrijsGradient);
 
-	//saveAs(_Root, "grijzeBergen.oct");
+	//_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_00.png"), { kleurGrijsPerlin_0, kleurGrasPerlin_0, kleurSneeuwPerlin_0 });// kleurGrijsGradient);
+	//saveAs(_Root, "grijzeBergSpiraal.oct");
 	//delete _Root;
-	//_Root = loadOctalTree("grijzeBergen.oct");
+	_Root = loadOctalTree("grijzeBergSpiraal.oct");
 
 	//_Root = A;
 	//CreateOctalFromSamplerFunc(simpleSampler, 6);
