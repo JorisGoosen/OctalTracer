@@ -24,11 +24,11 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 
 	//_Root = OctalNode::createFromHeightSampler(hoogte, kleurPerlin_0, 10);//kleurPerlin_0, 10);
 
-	//_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_01.png"), { kleurZwart, kleurZwart, kleurZwart });// kleurGrijsGradient);
+	_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_00.png"), { kleurZwart, kleurZwart, kleurZwart });// kleurGrijsGradient);
 	//saveAs(_Root, "mordor.oct");
 	//delete _Root;
 	//_Root = loadOctalTree("ugly.oct");
-	_Root = loadOctalTree("mordor.oct");
+	//_Root = loadOctalTree("mordor.oct");
 	//_Root = loadOctalTree("afgebrokkeldeFlats10.oct");
 
 	float		phi = 0.0f,
@@ -43,7 +43,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 				Origin				= Translatie,							//glm::mat3(ModelView) * Translatie,
 				TotalCubeBounds[2]	= {glm::vec3(-1.0f), glm::vec3(1.0f)};
 
-	int multi = 800000;
+	int multi = 2 * 100000; //800000;
 	for(int i=0; i< multi * 100; i++)
 	{
 		do
@@ -53,11 +53,11 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 		while(glm::length(Ray) > 1 && Ray.z > 0.0f && Ray.y < 0.0f);
 
 		Ray		 = glm::normalize(Ray);
-		Origin	 = glm::vec3(0.0f, 2.0f, -7.0f);
+		Origin	 = glm::vec3(0.0f, 5.0f, -7.0f);
 
 		//std::cout << "Ray " << Ray << "\tand Origin " << Origin << std::endl;
 
-		foton * found = GetCubeIntersectColor(_Root, Ray, TotalCubeBounds, Origin, glm::vec4(randvec3(0.75f, 1.0f), 1.0f));//glm::vec4(1.0f));//glm::vec4(glm::vec3(0.5f) + (0.5f * Ray), 1.0f));
+		foton * found = GetCubeIntersectColor(_Root, Ray, TotalCubeBounds, Origin, glm::vec4(randvec3(0.0f, 1.0f), 1.0f));//glm::vec4(1.0f));//glm::vec4(glm::vec3(0.5f) + (0.5f * Ray), 1.0f));
 
 		//std::cout << (found != NULL ? "found a cube with intersect!" : "didn't find a cube with intersect..") << std::endl;
 

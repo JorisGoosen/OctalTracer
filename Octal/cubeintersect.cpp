@@ -106,7 +106,7 @@ foton * GetCubeIntersectColor(OctalNode * Cubes, vec3 Ray, vec3 TotalCubeBounds[
 
 				if(true) //randfloat(0.0f, 1.0f) > 0.1f)
 				{
-					PrevNodeIndex->Kleur += glm::abs(glm::dot(normal, Ray)) * 0.5f * Kleur;//glm::min(glm::vec4(1.0f), PrevNodeIndex->Kleur + (0.1f * Kleur));
+					PrevNodeIndex->Kleur += glm::abs(glm::dot(normal, Ray)) * 1.0f * Kleur;//glm::min(glm::vec4(1.0f), PrevNodeIndex->Kleur + (0.1f * Kleur));
 
 					//lets return a position!
 					glm::vec3	rgb = glm::vec3(1.0f, 1.0f, 1.0f),
