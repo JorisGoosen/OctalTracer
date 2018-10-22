@@ -13,7 +13,9 @@ SOURCES += \
     Perlin.cpp \
     octal.cpp \
     octalnode.cpp \
-    cubeintersect.cpp
+    cubeintersect.cpp \
+    octaltex.cpp \
+    simpletexture.cpp
 
 HEADERS += \
     Perlin.h \
@@ -22,5 +24,8 @@ HEADERS += \
     octal.h \
     octalnode.h \
     samplerfunctions.h \
-    cubeintersect.h
+    cubeintersect.h \
+    octaltex.h \
+    simpletexture.h \
+    samplerfuncdefs.h
 

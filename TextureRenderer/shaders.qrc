@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Shaders/TexRen.vert</file>
+        <file>Shaders/TexRen.frag</file>
+    </qresource>
+</RCC>

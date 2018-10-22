@@ -8,14 +8,13 @@
 #include <fstream>
 #include <QImage>
 //#include "Perlin.h"
+#include "octaltex.h"
 
-typedef glm::vec4(*samplerFunc)(glm::vec3);
-typedef float(*heightSamplerFunc)(float, float);
-typedef glm::vec3(*colorSamplerFunc)(glm::vec3);
+#include "samplerfuncdefs.h"
 
-
-struct OctalNode
+class OctalNode
 {
+public:
 	OctalNode(OctalNode * JeOuder = NULL) : id(newId())
 	{
 		ZetMij(glm::vec4(0.0f), JeOuder);
@@ -39,6 +38,10 @@ struct OctalNode
 				delete sub;
 				sub = NULL;
 			}
+
+		if(_texture != NULL)
+			delete _texture;
+		_texture = NULL;
 	}
 
 	static uint64_t newId();
@@ -58,10 +61,6 @@ struct OctalNode
 
 
 
-	glm::vec4 Kleur;
-	OctalNode * Sub[8];
-	OctalNode * Ouder = NULL;
-
 	///returns true if everything below is empty
 	bool PruneEmptyChildren();
 
@@ -78,6 +77,16 @@ struct OctalNode
 
 	void		insertNode(glm::vec4 Kleur, glm::vec3 pos, int diepte, glm::vec3 Coordinaat = glm::vec3(0.0f), float KubusRad = 1.0f);
 
+	static	size_t	toIndex(glm::uvec3 p);
+			size_t	convertToTex();
+			void	addYourselfToTex(OctalTex * tex, glm::uvec3 texOrigin, uint texRange);
+
+
+	glm::vec4 Kleur;
+	OctalNode * Sub[8];
+	OctalNode * Ouder = NULL;
+
+	OctalTex	*_texture = NULL;
 
 };
 

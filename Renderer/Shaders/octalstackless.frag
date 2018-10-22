@@ -2,6 +2,7 @@
 #extension GL_ARB_shader_storage_buffer_object :   enable
 #extension GL_EXT_gpu_shader4 : enable
 
+layout(binding = 0) uniform sampler3D bricks;
 
 out vec4 fColor;
 
@@ -10,6 +11,7 @@ out vec4 fColor;
 
 uniform int MAXDIEPTE;
 uniform int OCTAL_MAX;
+uniform int TEXDIM;
 
 struct ShaderOctalNode
 {
@@ -22,6 +24,8 @@ layout(std430, binding = 0) buffer ShaderTree	{ ShaderOctalNode data[]; } Nodes;
 in vec3 Origin;
 in vec3 Ray;
 in vec3 InvRay;
+
+
 
 const vec3 TotalCubeBounds[2] = {vec3(-2.5f), vec3(2.5f)};
 vec4 Accumulatie = vec4(0.0f);

@@ -85,7 +85,7 @@ bool OctalNode::PruneEmptyChildren()
 
 bool OctalNode::MergeFullChildren()
 {
-	//return false;
+	return false;
 
 	bool allChildrenAreFull = true;
 	int iHaveThisManyChildren = 0;
@@ -556,10 +556,66 @@ OctalNode * OctalNode::createFromHeightVec(const std::vector<std::vector<glm::ve
 
 				Wortel->MergeFullChildren();
 			}
-
 		}
 
 	Wortel->MergeFullChildren();
 	return Wortel;
 
+}
+
+size_t OctalNode::convertToTex()
+{
+	size_t maxDepth = 0;
+
+	for(OctalNode * O : Sub)
+		if(O != NULL)
+			maxDepth = std::max(maxDepth, O->convertToTex());
+
+	maxDepth += 1;
+
+	if(maxDepth == OctalTex::Diepte) //Ok I am the one that needs to destroy my children and convert them to a texture
+	{
+		_texture = new OctalTex();
+		addYourselfToTex(_texture, glm::uvec3(0u), OctalTex::Dim);
+	}
+
+	return maxDepth;
+}
+
+size_t OctalNode::toIndex(glm::uvec3 p)
+{
+	return p.x + (p.y * 2) + (p.z * 4);
+}
+
+void OctalNode::addYourselfToTex(OctalTex * tex, glm::uvec3 texOrigin, uint texRange)
+{
+	if(texRange <= 1)
+	{
+		tex->setPixel(texOrigin, Kleur);
+		return;
+	}
+
+	glm::uvec3	iterPos = glm::uvec3(0u);
+	uint		range	= texRange / 2;
+
+	glm::vec4 tmpCol = glm::vec4(0.0f);
+
+	for(iterPos.x = 0u; iterPos.x < 2u; iterPos.x++)
+		for(iterPos.y = 0u; iterPos.y < 2u; iterPos.y++)
+			for(iterPos.z = 0u; iterPos.z < 2u; iterPos.z++)
+			{
+				size_t ind = toIndex(iterPos);
+				if(Sub[ind] != NULL)
+				{
+					Sub[ind]->addYourselfToTex(_texture, texOrigin + (iterPos * range), range);
+
+					tmpCol += Sub[ind]->Kleur * (1.0f / 8.0f);
+
+					delete Sub[ind];
+					Sub[ind] = NULL;
+				}
+				//default for tex is empty!
+			}
+
+	Kleur = tmpCol;
 }

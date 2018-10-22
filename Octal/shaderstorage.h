@@ -12,7 +12,7 @@ public:
                     shaderstorage(int HoeGroot, QOpenGLFunctions_4_5_Core *QTGL);
 	void			BindBufferStorage(GLuint Index);
 	void			SchrijfWeg(int StartIndex, DataStructuur *Blok, int BlokGrootte, int Diepte=0);
-	void			SchrijfWeg();
+	void			SchrijfWeg(int BlokGrootte = 0);
 	DataStructuur*	LeesUit();
 	int				Lengte()				{ return Grootte; }
 	void			SluitInleesRange();
@@ -37,8 +37,7 @@ template <class DataStructuur> shaderstorage<DataStructuur>::shaderstorage(int H
 	Data			= new DataStructuur[Grootte];
     GL->glGenBuffers(1,	&BufferIndex);
 	
-    GL->glBindBuffer(GL_SHADER_STORAGE_BUFFER, BufferIndex);
-    GL->glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(DataStructuur)*Grootte, NULL, GL_STATIC_DRAW);
+
 }
 
 template <class DataStructuur> void shaderstorage<DataStructuur>::BindBufferStorage(GLuint Index)
@@ -47,9 +46,10 @@ template <class DataStructuur> void shaderstorage<DataStructuur>::BindBufferStor
     GL->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Index, BufferIndex);
 }
 
-template <class DataStructuur> void shaderstorage<DataStructuur>::SchrijfWeg()
+template <class DataStructuur> void shaderstorage<DataStructuur>::SchrijfWeg(int BlokGrootte)
 {
-	SchrijfWeg(0, Data, Grootte, 0);
+
+	SchrijfWeg(0, Data, BlokGrootte == 0 ? Grootte : BlokGrootte, 0);
 }
 
 template <class DataStructuur> void shaderstorage<DataStructuur>::SchrijfWeg(int StartIndex, DataStructuur *Blok, int BlokGrootte, int Diepte)
@@ -62,6 +62,9 @@ template <class DataStructuur> void shaderstorage<DataStructuur>::SchrijfWeg(int
 	
 	//Buffer binden dan data mappen ,vullen en unmappen
     GL->glBindBuffer(GL_SHADER_STORAGE_BUFFER, BufferIndex);
+	GL->glBindBuffer(GL_SHADER_STORAGE_BUFFER, BufferIndex);
+	GL->glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(DataStructuur)*BlokGrootte, NULL, GL_STATIC_DRAW);
+
     DataStructuur *GpuData = (DataStructuur *) GL->glMapBufferRange(GL_SHADER_STORAGE_BUFFER, StartIndex, sizeof(DataStructuur)*BlokGrootte, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
     //glErrorToConsole("ShaderStorage heeft net glMapBufferRange gedaan!");
 

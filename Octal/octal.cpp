@@ -8,9 +8,10 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
+Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : _perlin(perlin)
 {
-    ShaderTree = new shaderstorage<ShaderOctalNode>(OCTAL_MAX, QTGL);
+	_shaderTree = new shaderstorage<ShaderOctalNode>(OCTAL_MAX, QTGL);
+	//_bricks = new SimpleTexture(QTGL, glm::uvec3(64));
 
 	//FillOctal();
 	registerPerlinNoise(perlin);
@@ -24,13 +25,26 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 
 	//_Root = OctalNode::createFromHeightSampler(hoogte, kleurPerlin_0, 10);//kleurPerlin_0, 10);
 
-	_Root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_00.png"), { kleurZwart, kleurZwart, kleurZwart });// kleurGrijsGradient);
-	//saveAs(_Root, "mordor.oct");
-	//delete _Root;
-	//_Root = loadOctalTree("ugly.oct");
-	//_Root = loadOctalTree("mordor.oct");
-	//_Root = loadOctalTree("afgebrokkeldeFlats10.oct");
+	_root = OctalNode::createFromHeightMap(QImage("../Raycaster/Octal/Grond_00.png"), { kleurZwart, kleurZwart, kleurZwart });// kleurGrijsGradient);
 
+	//std::cout << "starting to convert deeper levels to textures!" << std::endl;
+	//_root->convertToTex();
+
+	std::cout << "shooting light" << std::endl;
+	shootLight();
+
+	std::cout << "starting to convert to shader buffer!" << std::endl;
+	uint32_t nodesCreated = ConvertOctalToShader();
+
+	std::cout << "writing buffer of #" << nodesCreated << std::endl;
+	_shaderTree->SchrijfWeg(nodesCreated);
+
+	//std::cout << "writing texture" << std::endl;
+	//_bricks->createTexture();
+}
+
+void Octal::shootLight()
+{
 	float		phi = 0.0f,
 				theta = 0.0f;
 
@@ -57,7 +71,7 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 
 		//std::cout << "Ray " << Ray << "\tand Origin " << Origin << std::endl;
 
-		foton * found = GetCubeIntersectColor(_Root, Ray, TotalCubeBounds, Origin, glm::vec4(randvec3(0.0f, 1.0f), 1.0f));//glm::vec4(1.0f));//glm::vec4(glm::vec3(0.5f) + (0.5f * Ray), 1.0f));
+		foton * found = GetCubeIntersectColor(_root, Ray, TotalCubeBounds, Origin, glm::vec4(randvec3(0.0f, 1.0f), 1.0f));//glm::vec4(1.0f));//glm::vec4(glm::vec3(0.5f) + (0.5f * Ray), 1.0f));
 
 		//std::cout << (found != NULL ? "found a cube with intersect!" : "didn't find a cube with intersect..") << std::endl;
 
@@ -70,11 +84,6 @@ Octal::Octal(QOpenGLFunctions_4_5_Core *QTGL, Perlin * perlin) : perlin(perlin)
 			std::cout << "light at " << (i / multi) << "%" << std::endl;
 	}
 
-	//_Root = A;
-	//CreateOctalFromSamplerFunc(simpleSampler, 6);
-    ConvertOctalToShader();
-
-    ShaderTree->SchrijfWeg();
 }
 
 OctalNode * Octal::FillOctal()
@@ -226,20 +235,22 @@ OctalNode * Octal::CreateOctalFromSamplerFunc(samplerFunc sampler, int Depth, bo
 	return Root;
 }
 
-void Octal::ConvertOctalToShader()
+uint32_t Octal::ConvertOctalToShader()
 {
     uint32_t RunningCounter = 0;
-    OctalNodeToShaderIndex.clear();
-	ConvertOctalToShader(_Root, RunningCounter, OCTAL_MAX, OCTAL_MAX, 0);
+	_octToShadNode.clear();
+	ConvertOctalToShader(_root, RunningCounter, OCTAL_MAX, OCTAL_MAX, 0);
 
     qDebug("Gevonden MaxDepth = %u\n", MaxDepth);
+
+	return RunningCounter;
 }
 
 void Octal::printTree()
 {
 	uint NaamDiepte = 0;
     std::map<OctalNode*, std::string> NodeToNaam;
-	std::string Resultaat = printTree(_Root, NodeToNaam, NaamDiepte);
+	std::string Resultaat = printTree(_root, NodeToNaam, NaamDiepte);
 	std::cout << Resultaat << std::flush;
 
 	//printf("%s\n", Resultaat.c_str());
@@ -301,11 +312,18 @@ uint32_t Octal::ConvertOctalToShader(OctalNode* HuidigeNode, uint32_t& Counter, 
     //(*ShaderTree)[HuidigeIndex].Ouder = Ouder;
     //(*ShaderTree)[HuidigeIndex].SubIndex = SubIndex;;
 
-	(*ShaderTree)[HuidigeIndex].Kleur = glm::mediump_vec4(HuidigeNode->Kleur);
+	(*_shaderTree)[HuidigeIndex].Kleur = glm::mediump_vec4(HuidigeNode->Kleur);
 
 
-    for(int i=0; i<8; i++)
-        (*ShaderTree)[HuidigeIndex].Sub[i] = HuidigeNode->Sub[i] == NULL ? OCTAL_MAX : ConvertOctalToShader(HuidigeNode->Sub[i], Counter, HuidigeIndex, i, Diepte + 1);
+	if(HuidigeNode->_texture != NULL)
+	{
+		size_t octIndex = _bricks->addOctTex(HuidigeNode->_texture);
+		(*_shaderTree)[HuidigeIndex].Sub[0] = OCTAL_MAX + 1;
+		(*_shaderTree)[HuidigeIndex].Sub[1] = octIndex;
+	}
+	else
+		for(int i=0; i<8; i++)
+			(*_shaderTree)[HuidigeIndex].Sub[i] = HuidigeNode->Sub[i] == NULL ? OCTAL_MAX : ConvertOctalToShader(HuidigeNode->Sub[i], Counter, HuidigeIndex, i, Diepte + 1);
 
     return HuidigeIndex;
 }

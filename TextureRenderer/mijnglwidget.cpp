@@ -1,4 +1,5 @@
 #include "mijnglwidget.h"
+#include "samplerfunctions.h"
 
 float MijnGLWidget::getMilliseconds()
 {
@@ -12,8 +13,8 @@ void MijnGLWidget::initializeGL()
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-	if(!prepareShaderProgram(m_shader_stack,		":/Shaders/Octal.vert", ":/Shaders/Octal.frag" )) return;
-	if(!prepareShaderProgram(m_shader_stackless,	":/Shaders/Octal.vert", ":/Shaders/octalstackless.frag" )) return;
+	if(!prepareShaderProgram(m_shader_stack,		":/Shaders/TexRen.vert", ":/Shaders/TexRen.frag" )) return;
+
 
     float points[] = {
          1,  1, 1, 1,
@@ -29,27 +30,21 @@ void MijnGLWidget::initializeGL()
         qWarning() << "Could not bind vertex buffer to the context";
         return;
     }
+
     m_vertexBuffer.allocate( points, 4 * 4 * sizeof( float ) );
 
-    // Bind the shader program so that we can associate variables from
-    // our application to the shaders
-	for(
-		QOpenGLShaderProgram * m_shader = &m_shader_stackless;
-		m_shader != NULL;
-		m_shader = (m_shader == &m_shader_stackless ? &m_shader_stack : NULL)
-	) {
 
-		if (!m_shader->bind() )
-		{
-			qWarning() << "Could not bind shader program to context";
-			return;
-		}
-
-		// Enable the "vertex" attribute to bind it to our currently bound
-		// vertex buffer.
-		m_shader->setAttributeBuffer( "vertex", GL_FLOAT, 0, 4 );
-		m_shader->enableAttributeArray( "vertex" );
+	if (!m_shader_stack.bind() )
+	{
+		qWarning() << "Could not bind shader program to context";
+		return;
 	}
+
+	// Enable the "vertex" attribute to bind it to our currently bound
+	// vertex buffer.
+	m_shader_stack.setAttributeBuffer( "vertex", GL_FLOAT, 0, 4 );
+	m_shader_stack.enableAttributeArray( "vertex" );
+
 
     ZonPos = QVector3D(0.0f, 100.0f, 0.0f);
     m_projection.setToIdentity();
@@ -58,25 +53,20 @@ void MijnGLWidget::initializeGL()
 	srand(time(NULL));
 	rand();
 
-	MijnPerlin = new Perlin(this);
-	MijnOctal = new Octal(this, MijnPerlin);
-	//MijnOctal->printTree();
-	MijnOctal->BindBuffer();
-	MijnOctal->bindTexture();
+	glEnable(GL_TEXTURE_3D);
 
-	HoofdScherm::theHoofdScherm->setShaderInUse(use_shader_stack ? "STACK USED" : "STACKLESS USED");
+	MijnPerlin	= new Perlin(this);
+	_bricks		= new SimpleTexture(this, glm::uvec3(64), false);
+
+	TexGrootte	= toQVectorXD(_bricks->size());
+
+	_bricks->fillWithSampler(perlinNoise);
 }
 
 void MijnGLWidget::resizeGL(int w, int h)
 {
     // Set the viewport to window dimensions
     glViewport( 0, 0, w, qMax( h, 1 ) );
-}
-
-void MijnGLWidget::shaderButtonPressed()
-{
-	use_shader_stack = !use_shader_stack;
-	HoofdScherm::theHoofdScherm->setShaderInUse(use_shader_stack ? "STACK USED" : "STACKLESS USED");
 }
 
 void MijnGLWidget::paintGL()
@@ -100,6 +90,7 @@ void MijnGLWidget::paintGL()
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     m_vertexBuffer.bind();
+	_bricks->bindTexture();
 
 	QOpenGLShaderProgram & m_shader = get_current_shader();
 
@@ -114,22 +105,16 @@ void MijnGLWidget::paintGL()
     m_shader.setUniformValue("ModelView", m_modelview);
     m_shader.setUniformValue("fov_y_scale", FovYScale);
     m_shader.setUniformValue("aspect", AspectRatio);
-    m_shader.setUniformValue("RPos", ZonPos);
-    m_shader.setUniformValue("GPos", ZonPos);
-	m_shader.setUniformValue("BPos", ZonPos);
 
     m_shader.setUniformValue("Translation", Translatie);
-    m_shader.setUniformValue( "RGBFragMultiplier", QVector3D(0.0f, 0.0f, 0.0f));
+	m_shader.setUniformValue("RGBFragMultiplier", QVector3D(0.0f, 0.0f, 0.0f));
     //MijnPerlin->BindBuffers();
     //m_shader.setUniformValue("PerlinSize", PERLIN_NUM_GRADIENTS);
 
-	m_shader.setUniformValue("OCTAL_MAX", OCTAL_MAX);
-	m_shader.setUniformValue("MAXDIEPTE", MijnOctal->MaxDepth);
 
-	m_shader.setUniformValue("TEXDIM", int(OctalTex::Dim));
-
-
-
+	m_shader.setUniformValue("TexSize", TexGrootte);
+	static QVector3D TexInv= toQVectorXD(glm::vec3(1.0f) / glm::vec3(_bricks->size()));
+	m_shader.setUniformValue("TexInv", TexInv);
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 }

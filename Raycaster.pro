@@ -1,7 +1,8 @@
 TEMPLATE = subdirs
 
-SUBDIRS = Octal \
-  Renderer
+SUBDIRS = 	Octal \
+  		Renderer \
+		TextureRenderer
 
 Renderer.depends = Octal
 

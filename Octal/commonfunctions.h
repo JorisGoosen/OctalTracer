@@ -8,6 +8,7 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
+#include <algorithm>
 
 inline float randfloat(float min, float max) { return min+((((float)(rand()%RAND_MAX))/((float)RAND_MAX))* (max-min)); }
 
@@ -26,6 +27,16 @@ inline float unisin(float ang) { return 0.5f + ( 0.5f * sinf(ang) ); }
 inline float unicos(float ang) { return 0.5f + ( 0.5f * cosf(ang) ); }
 
 inline glm::vec3 mixCol(glm::vec3 a, glm::vec3 b, float r) { r = std::min(1.0f, std::max(0.0f, r)); return ( a * (1.0f - r) ) + ( b * r ); }
+
+inline glm::vec3 toGLM(const QVector3D & in) { return glm::vec3(in.x(), in.y(), in.z()); }
+inline glm::vec4 toGLM(const QVector4D & in) { return glm::vec4(in.x(), in.y(), in.z(), in.w()); }
+
+inline QVector3D toQVectorXD(const glm::vec3 & in) { return QVector3D(in.x, in.y, in.z); }
+inline QVector4D toQVectorXD(const glm::vec4 & in) { return QVector4D(in.x, in.y, in.z, in.w); }
+
+inline QVector3D toQVectorXD(const glm::uvec3 & in) { return QVector3D(in.x, in.y, in.z); }
+inline QVector4D toQVectorXD(const glm::uvec4 & in) { return QVector4D(in.x, in.y, in.z, in.w); }
+
 
 
 const float pi = 3.14159265359f;
