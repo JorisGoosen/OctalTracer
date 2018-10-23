@@ -86,34 +86,57 @@ vec4 GetCubeIntersectColor()
         tmax            = oritmax;
 
 
+  int stop = 10000;
 
-  minmax = min(min(tmax.x, tmax.y), tmax.z);
-
-  int stop = 2000;
   while(stop-- > 0)
-	{
-
+  {
+    minmax = min(min(tmax.x, tmax.y), tmax.z);
     maxmin = max(max(tmin.x, tmin.y), tmin.z);
 
-		if(maxmin >= minmax || minmax < 0 || maxmin < 0)
-      return FaalKleur;//AccumuleerKleur(FaalKleur, 1);
-
-    //ok ik raak de kubus
+    if(maxmin >= minmax || maxmin < 0)
+       return FaalKleur;//AccumuleerKleur(FaalKleur, 1);
 
     vec3  worldInP  = Origin + (Ray * maxmin),
           texPosIn  = getTexUnitPos(worldInP);
 
-    ivec3 texCoord  = ivec3(floor(texPosIn * TexSize));
 
-    vec4  texColIn    = texture(bricks, floor(texPosIn * TexSize) * TexInv, 0);
-    ivec3 nextCoord   = texCoord + Step;
+    vec4 accu = vec4(0.0f);
 
-    vec3  outCubeMax  = fromTexUnitPos(vec3(nextCoord) * TexInv),
+    while(maxmin < minmax)
+    {
+      const float step = 0.01f;
+      maxmin += step;
+
+      if(maxmin < minmax)
+      {
+        worldInP  = Origin + (Ray * maxmin);
+        texPosIn  = getTexUnitPos(worldInP);
+
+        vec4 tmp = texture(bricks, texPosIn);
+
+        if(tmp.a > 0.99f)
+          return tmp;
+
+        //accu += TexSize.x * step * vec4((tmp.rgb * tmp.a), tmp.a);
+
+        //if(accu.a > 0.99f)
+          //return accu;
+      }
+    }
+
+    return (accu * accu.a) + (FaalKleur * (1.0f - accu.a));
+/*
+    //De kubus is altijd precies ge-aligned met dezelfde ruimte als waar de ray in zit
+    //Dus hoef ik die alleen maar te volgen tot de eerste botsing een volgende cell
+    vec3 texCoord     = floor(texPosIn * TexSize);
+
+    vec4  texColIn    = texture(bricks, texPosIn, 0);
+    vec3 nextCoord    = texCoord + Step;
+
+    vec3  outCubeMax  = fromTexUnitPos(nextCoord * TexInv),
           tOut        = (outCubeMax - Origin) * InvRay;
 
-
     float celminmax = min(min(tOut.x, tOut.y), tOut.z);
-
 
     if(celminmax >= minmax || celminmax < 0)
       return FaalKleur;//AccumuleerKleur(FaalKleur, 1);
@@ -127,7 +150,7 @@ vec4 GetCubeIntersectColor()
 
     //maxmin            = max(max(tOut.x, tOut.y), tOut.z);
     tmin = tOut;
-
+*/
     //minimumMaxMin = minmax + 0.00000000000000000001f;
 
     //return texColIn * texColIn.a;

@@ -56,7 +56,7 @@ void MijnGLWidget::initializeGL()
 	glEnable(GL_TEXTURE_3D);
 
 	MijnPerlin	= new Perlin(this);
-	_bricks		= new SimpleTexture(this, glm::uvec3(64), false);
+	_bricks		= new SimpleTexture(this, glm::uvec3(128), false);
 
 	TexGrootte	= toQVectorXD(_bricks->size());
 
